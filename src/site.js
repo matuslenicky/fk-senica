@@ -32,8 +32,8 @@ add('', {
 </div></section>
 <section class="spread"><div class="wrap spread-in">
   <div class="page-l">
-    <h2 class="h3">Posledné výsledky</h2>${fxList(results.filter((x) => x.score).slice(0, 5), R)}
-    <h2 class="h3 h3--gap">Program</h2>${upcoming.length ? fxList(upcoming.slice(0, 4), R) : '<p>Ďalšie zápasy zatiaľ nie sú vyžrebované.</p>'}
+    <h2 class="h3">Posledné výsledky</h2>${fxList(homeRes(5), R)}
+    <h2 class="h3 h3--gap">Program</h2>${homeUp(4).length ? fxList(homeUp(4), R) : '<p>Ďalšie zápasy zatiaľ nie sú vyžrebované.</p>'}
     ${more(`${R}zapasy/`, 'Všetky zápasy')}
   </div>
   <div class="page-r">
