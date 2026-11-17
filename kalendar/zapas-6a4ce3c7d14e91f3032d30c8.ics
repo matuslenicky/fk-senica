@@ -3,7 +3,7 @@ VERSION:2.0
 PRODID:-//FK Senica//Zapasy//SK
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:FK Senica – U19 dievčatá Staršie dorastenky
+X-WR-CALNAME:FK Senica – Staršie dorastenky U19 dievčatá
 X-WR-TIMEZONE:Europe/Bratislava
 BEGIN:VTIMEZONE
 TZID:Europe/Bratislava
@@ -24,7 +24,7 @@ END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:zapas-6a4ce3c7d14e91f3032d30c8@fk-senica.sportnet
-DTSTAMP:20261117T153014Z
+DTSTAMP:20261117T224221Z
 DTSTART;TZID=Europe/Bratislava:20270307T110000
 DURATION:PT2H
 SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – FKM Stupava
