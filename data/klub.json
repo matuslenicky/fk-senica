@@ -1,0 +1,194 @@
+{
+  "_zdroj": "Ručne zapísané len zo zverejnených zdrojov (uvedené pri každej časti). Nič nedopĺňať odhadom – chýbajúce údaje dodá klub.",
+  "nazov": "FK Senica",
+  "kratky": "FK Senica",
+  "pravnyNazov": "Futbalový klub Senica n.o.",
+  "_pravnyNazov": "Sportnet (Futbalový klub Senica n.o.)",
+  "mesto": "Senica",
+  "zalozenie": 1921,
+  "obnova": 2022,
+  "_zalozenie": "Wikipédia en (FK Senica): futbalový klub v meste založený 1921, po bankrote v roku 2022 obnovený",
+  "prezyvka": "Záhoráci",
+  "farby": "modrá a červená",
+  "_farby": "erb klubu (modrý nápis, červené hviezdy, prstenec z červenej do modrej); Wikipédia (dresy)",
+  "erbAlt": "Erb FK Senica: kruh s nápisom Futbalový klub Senica, lopta, dve červené hviezdy, prstenec prechádza z červenej do modrej",
+  "adresa": [
+    "Sadová",
+    "905 01 Senica"
+  ],
+  "_adresa": "Sportnet (ulica Sadová, PSČ 905 01)",
+  "kontakt": {
+    "email": "ivan.tobias82@gmail.com"
+  },
+  "_kontakt": "Sportnet (kontakt klubu)",
+  "sportnetUrl": "https://sportnet.sme.sk/futbalnet/k/futbalovy-klub-senica/",
+  "socialne": {},
+  "_socialne": "domény fksenica.sk a fksenica.eu sú dnes stávkové stránky; Facebook ani Instagram sa nenašli (17. 11. 2026)",
+  "stadion": {
+    "_zdroj": "Wikipédia en (Štadión FK Senica, OMS Arena); Sportnet (poloha)",
+    "nazov": "Štadión FK Senica",
+    "obchodny": "OMS Arena",
+    "kapacita": 5070,
+    "otvoreny": "24. októbra 1962",
+    "geo": [
+      48.6841534,
+      17.3767458
+    ],
+    "pribeh": "Nový štadión v Senici otvorili 24. októbra 1962. Pokrstila ho reprezentácia Československa v zostave, ktorá v lete hrala finále majstrovstiev sveta v Čile. Výber okresu Senica so šiestimi hráčmi zo Senice prehral 0 : 7.",
+    "rekonstrukcia": "V lete 2009 pred vstupom do najvyššej súťaže dostal štadión viac ako 4 000 nových sedadiel, opravené kryté tribúny, nové ozvučenie a priestory pre novinárov, VIP a televíziu. V roku 2010 prešla celá hracia plocha rekonštrukciou s prípravou na vyhrievaný trávnik a automatickým zavlažovaním."
+  },
+  "historia": [
+    {
+      "rok": "1921",
+      "text": "V Senici vzniká futbalový klub, prvý názov je Železná únia Senica, od roku 1923 Športový klub Senica.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "1962",
+      "text": "Otvorenie nového štadióna zápasom s vicemajstrami sveta z Čile.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2009",
+      "text": "Senica kupuje licenciu od Interu Bratislava a prvýkrát v histórii hrá najvyššiu súťaž.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2010/11",
+      "text": "Druhé miesto v najvyššej súťaži. V lete 2011 prvý štart v Európskej lige: 3. predkolo proti Red Bullu Salzburg.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2012",
+      "text": "Finále Slovenského pohára. V lete v Európskej lige vyraďuje MTK Budapešť (3 : 2), v 2. predkole končí s APOELom Nikózia.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2012/13",
+      "text": "Znova druhé miesto v lige a v lete 2013 tretí štart v Európskej lige za sebou.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2015",
+      "text": "Druhé finále Slovenského pohára.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2022",
+      "text": "Po sezóne 2021/22 klub skrachoval a prišiel o licenciu. Futbal v Senici sa začína odznova.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2023/24",
+      "text": "Víťaz VIII. ligy ObFZ Senica. Najlepší strelec Pavol Škodáček, 19 gólov.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2024/25",
+      "text": "Víťaz VII. ligy ObFZ Senica. Najlepší strelec Teofil Palka, 20 gólov.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2025/26",
+      "text": "Druhé miesto v VI. lige Západ. Najlepší strelec Ľubomír Ulrich, 24 gólov.",
+      "zdroj": "Wikipédia"
+    },
+    {
+      "rok": "2026/27",
+      "text": "Senica hrá V. ligu. Na záhorácke derby nováčikov s Hlbokým prišlo 850 divákov.",
+      "zdroj": "Sportnet; Záhorák, 31. 8. 2026"
+    }
+  ],
+  "europa": {
+    "_zdroj": "Wikipédia en (FK Senica – European competition history)",
+    "zapasy": [
+      {
+        "sezona": "2011/12",
+        "kolo": "3. predkolo",
+        "super": "Red Bull Salzburg",
+        "krajina": "Rakúsko",
+        "doma": "0 : 3",
+        "vonku": "0 : 1"
+      },
+      {
+        "sezona": "2012/13",
+        "kolo": "1. predkolo",
+        "super": "MTK Budapešť",
+        "krajina": "Maďarsko",
+        "doma": "2 : 1",
+        "vonku": "1 : 1",
+        "postup": true
+      },
+      {
+        "sezona": "2012/13",
+        "kolo": "2. predkolo",
+        "super": "APOEL Nikózia",
+        "krajina": "Cyprus",
+        "doma": "0 : 1",
+        "vonku": "0 : 2"
+      },
+      {
+        "sezona": "2013/14",
+        "kolo": "2. predkolo",
+        "super": "Mladost Podgorica",
+        "krajina": "Čierna Hora",
+        "doma": "0 : 1",
+        "vonku": "2 : 2"
+      }
+    ]
+  },
+  "uspechy": [
+    {
+      "rok": "2010/11, 2012/13",
+      "text": "2. miesto v najvyššej súťaži"
+    },
+    {
+      "rok": "2012, 2015",
+      "text": "finalista Slovenského pohára"
+    },
+    {
+      "rok": "2023/24",
+      "text": "víťaz VIII. ligy ObFZ Senica"
+    },
+    {
+      "rok": "2024/25",
+      "text": "víťaz VII. ligy ObFZ Senica"
+    }
+  ],
+  "rival": "Najväčším rivalom Senice je Spartak Myjava, ich zápasy sa volajú záhorácko-kopaničiarske derby. Prvé derby v najvyššej súťaži sa hralo 24. augusta 2012.",
+  "_rival": "Wikipédia en (Rivalries)",
+  "strelec": "Najlepším strelcom Senice v najvyššej súťaži je Juraj Piroska so 48 gólmi.",
+  "_strelec": "Wikipédia en (Most goals)",
+  "sutaze": {
+    "_pozn": "čitateľné názvy súťaží namiesto skratiek a názvov so sponzormi zo Sportnetu",
+    "Slovnaft Cup": "Slovnaft Cup",
+    "V. liga Severozápad Macron | yoursport ZsFZ": "V. liga Severozápad",
+    "III. liga U19 Macron | yoursport ZsFZ": "III. liga U19 ZsFZ",
+    "III. liga U17 Macron | yoursport ZsFZ": "III. liga U17 ZsFZ",
+    "II. liga U15 Macron | yoursport ZsFZ": "II. liga U15 ZsFZ",
+    "III. liga U15 Macron | yoursport ZsFZ": "III. liga U15 ZsFZ",
+    "II. liga U13 Macron | yoursport ZsFZ": "II. liga U13 ZsFZ",
+    "III. liga U13 Macron | yoursport ZsFZ": "III. liga U13 ZsFZ",
+    "IV.liga- SLOVIMM - MLŽ-U13-ObFZ SE": "IV. liga mladších žiakov U13 ObFZ Senica",
+    "III. liga Prípravka-HUMMEL-U9-MO ObFZ SE": "III. liga prípraviek U9 ObFZ Senica",
+    "II. LD - WU19": "II. liga dorasteniek WU19",
+    "II. LŽ - WU15": "II. liga žiačok WU15",
+    "Prípravka U11": "Prípravka U11 ZsFZ",
+    "Prípravka U10": "Prípravka U10 ZsFZ",
+    "Prípravka U09": "Prípravka U9 ZsFZ"
+  },
+  "nazvy": {
+    "_pozn": "čitateľné názvy súperov namiesto úradných názvov a veľkých písmen zo Sportnetu",
+    "Futbalový klub Senica": "FK Senica",
+    "Futbalový klub Senica B": "FK Senica B",
+    "Futbalový klub Senica C": "FK Senica C",
+    "Trenčiansky Futbalový Klub Opatová": "TFK Opatová",
+    "ŠK LR CRYSTAL": "ŠK LR Crystal",
+    "FK TEMPO Partizánske": "FK Tempo Partizánske",
+    "MFC SPARTAK Bánovce nad Bebravou": "MFC Spartak Bánovce nad Bebravou",
+    "Futbalový klub Nová Dubnica": "FK Nová Dubnica",
+    "Futbalová Akadémia Matúšova zem Horné Saliby/Tomášikovo": "FA Matúšova zem",
+    "Futbalová Akadémia Matúšova zem Horné Saliby/Tomášikovo B": "FA Matúšova zem B",
+    "MŠK - Thermál Veľký Meder": "MŠK Thermál Veľký Meder"
+  }
+}
