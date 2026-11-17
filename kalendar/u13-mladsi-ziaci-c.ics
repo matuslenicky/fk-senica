@@ -1,0 +1,212 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FK Senica//Zapasy//SK
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FK Senica – U13 C Mladší žiaci
+X-WR-TIMEZONE:Europe/Bratislava
+BEGIN:VTIMEZONE
+TZID:Europe/Bratislava
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:zapas-6a577c82d14e91f303579e84@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260815T130000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Tatran Jablonica – FK Senica U13 C 6:2
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 1. kolo\nZápas 
+ vonku
+LOCATION:Tatran Jablonica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0eab@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260822T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – FC Družstevník Rybky 2:4
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 2. kolo\nDomáci
+  zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12cd14e91f303ba0a05@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260827T170000
+DURATION:PT2H
+SUMMARY:U13 C: Spartak Myjava B – FK Senica U13 C 7:1
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 3. kolo\nZápas 
+ vonku
+LOCATION:Štadión Stará Myjava
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0ee2@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260913T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – OFK Mokrý Háj 8:0
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 5. kolo\nDomáci
+  zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12cd14e91f303ba09ff@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260920T120000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Iskra Holíč B – FK Senica U13 C 6:0
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 6. kolo\nZápas 
+ vonku
+LOCATION:TJ Iskra Holíč\, náhradná plocha - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0f87@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260927T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Družstevník Popudinské Močidlany
+  9:1
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 7. kolo\nDomáci
+  zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0f78@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261007T170000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Družstevník Kunov o.z. – FK Senica U13 C 2:6
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 8. kolo\nZápas 
+ vonku
+LOCATION:Čáčov
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0e42@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261011T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – FK Cerová 4:3
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 9. kolo\nDomáci
+  zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba118b@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261017T100000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Družstevník Hlboké – FK Senica U13 C 0:12
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 10. kolo\nZápas
+  vonku
+LOCATION:Hlboké
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba105f@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261024T133000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Chvojničan Radošovce 3:2
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 11. kolo\nDomác
+ i zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba0eaa@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261030T163000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Tatran Jablonica 8:2
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 12. kolo\nDomác
+ i zápas
+LOCATION:FK Senica - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12ed14e91f303ba138f@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261101T100000
+DURATION:PT2H
+SUMMARY:U13 C: FC Družstevník Rybky – FK Senica U13 C 2:3
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 13. kolo\nZápas
+  vonku
+LOCATION:Rybky
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba1226@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261107T133000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – Spartak Myjava B 1:4
+DESCRIPTION:IV. liga mladších žiakov U13 ObFZ Senica\, 14. kolo\nDomác
+ i zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12dd14e91f303ba1062@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270326T100000
+DURATION:PT2H
+SUMMARY:U13 C: OFK Mokrý Háj – FK Senica U13 C
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 16. kolo\nZápas vonku
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12ed14e91f303ba12d8@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270328T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Iskra Holíč B
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 17. kolo\nDomáci zápas
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12ed14e91f303ba1275@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270404T123000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Družstevník Popudinské Močidlany – FK Senica U13 C
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 18. kolo\nZápas vonku
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e12fd14e91f303ba17bd@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270411T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Družstevník Kunov o.z.
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 19. kolo\nDomáci zápas
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e131d14e91f303ba1c6c@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270418T120000
+DURATION:PT2H
+SUMMARY:U13 C: FK Cerová – FK Senica U13 C
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 20. kolo\nZápas vonku
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e130d14e91f303ba1978@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270425T100000
+DURATION:PT2H
+SUMMARY:U13 C: FK Senica U13 C – TJ Družstevník Hlboké
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 21. kolo\nDomáci zápas
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a50e130d14e91f303ba19e2@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270502T100000
+DURATION:PT2H
+SUMMARY:U13 C: TJ Chvojničan Radošovce – FK Senica U13 C
+DESCRIPTION:IV. liga MO Mladší žiaci U13\, 22. kolo\nZápas vonku
+END:VEVENT
+END:VCALENDAR

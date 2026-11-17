@@ -1,0 +1,172 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FK Senica//Zapasy//SK
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FK Senica – U19 dievčatá Staršie dorastenky
+X-WR-TIMEZONE:Europe/Bratislava
+BEGIN:VTIMEZONE
+TZID:Europe/Bratislava
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d2b64@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260816T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FC Nitra – FK Senica U19 dievčatá 7:1
+DESCRIPTION:II. liga dorasteniek WU19\, 1. kolo\nZápas vonku
+LOCATION:FC Nitra - náhradná hracia plocha - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c4d14e91f3032d254f@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260823T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – KFC Komárno futbal 1
+ :1
+DESCRIPTION:II. liga dorasteniek WU19\, 2. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d27aa@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260830T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: GFC regionálna akadémia B – FK Senica U19 diev
+ čatá 2:2
+DESCRIPTION:II. liga dorasteniek WU19\, 3. kolo\nZápas vonku
+LOCATION:OFK Tesáre
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c4d14e91f3032d240d@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260906T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – FC ViOn Zlaté Moravc
+ e - Vráble 3:3
+DESCRIPTION:II. liga dorasteniek WU19\, 4. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d2753@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260913T120000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Slovan Levice – FK Senica U19 dievčatá 1:1
+DESCRIPTION:II. liga dorasteniek WU19\, 5. kolo\nZápas vonku
+LOCATION:FK Slovan Levice - náhradná plocha P1
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d2830@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260920T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – SDM Domino 4:5
+DESCRIPTION:II. liga dorasteniek WU19\, 6. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d2aa2@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260927T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FKM Stupava – FK Senica U19 dievčatá 1:2
+DESCRIPTION:II. liga dorasteniek WU19\, 7. kolo\nZápas vonku
+LOCATION:FK Stupava - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d25e7@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261011T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – MŠK Púchov 1:6
+DESCRIPTION:II. liga dorasteniek WU19\, 9. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2ceb@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261018T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – FC Nitra 1:6
+DESCRIPTION:II. liga dorasteniek WU19\, 10. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2b89@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261025T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: KFC Komárno futbal – FK Senica U19 dievčatá 6
+ :1
+DESCRIPTION:II. liga dorasteniek WU19\, 11. kolo\nZápas vonku
+LOCATION:Futbalové ihrisko Čalovec
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2c35@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261030T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – GFC regionálna akad
+ émia B 1:1
+DESCRIPTION:II. liga dorasteniek WU19\, 12. kolo\nDomáci zápas
+LOCATION:FK Senica - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2e3f@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261108T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FC ViOn Zlaté Moravce - Vráble – FK Senica U19
+  dievčatá 4:2
+DESCRIPTION:II. liga dorasteniek WU19\, 13. kolo\nZápas vonku
+LOCATION:FC ViOn Zlaté Moravce - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2d38@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261115T100000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – FK Slovan Levice 6:0
+DESCRIPTION:II. liga dorasteniek WU19\, 14. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c5d14e91f3032d2a04@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270228T160000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: SDM Domino – FK Senica U19 dievčatá
+DESCRIPTION:II. liga dorasteniek WU19\, 15. kolo\nZápas vonku
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c7d14e91f3032d30c8@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270307T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: FK Senica U19 dievčatá – FKM Stupava
+DESCRIPTION:II. liga dorasteniek WU19\, 16. kolo\nDomáci zápas
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4ce3c6d14e91f3032d2e98@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270321T110000
+DURATION:PT2H
+SUMMARY:U19 dievčatá: MŠK Púchov – FK Senica U19 dievčatá
+DESCRIPTION:II. liga dorasteniek WU19\, 18. kolo\nZápas vonku
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,172 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FK Senica//Zapasy//SK
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FK Senica – U15 dievčatá Staršie žiačky
+X-WR-TIMEZONE:Europe/Bratislava
+BEGIN:VTIMEZONE
+TZID:Europe/Bratislava
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:zapas-6a4e6419d14e91f303e31174@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260816T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FC Nitra – FK Senica U15 dievčatá 7:2
+DESCRIPTION:II. liga žiačok WU15\, 1. kolo\nZápas vonku
+LOCATION:FC Nitra - náhradná hracia plocha - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e6419d14e91f303e311e3@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260823T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – KFC Komárno futbal 1
+ :2
+DESCRIPTION:II. liga žiačok WU15\, 2. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a7343a162c4077e4f585745@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260830T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: GFC regionálna akadémia B – FK Senica U15 diev
+ čatá 2:5
+DESCRIPTION:II. liga žiačok WU15\, 3. kolo\nZápas vonku
+LOCATION:OFK Tesáre
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e31352@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260906T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – FC ViOn Zlaté Moravc
+ e - Vráble 4:3
+DESCRIPTION:II. liga žiačok WU15\, 4. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e3144c@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260913T140000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Slovan Levice – FK Senica U15 dievčatá 0:1
+DESCRIPTION:II. liga žiačok WU15\, 5. kolo\nZápas vonku
+LOCATION:FK Slovan Levice - náhradná plocha P1
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e312e1@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260920T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – SDM Domino 0:1
+DESCRIPTION:II. liga žiačok WU15\, 6. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e31591@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20260927T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FKM Stupava – FK Senica U15 dievčatá 3:8
+DESCRIPTION:II. liga žiačok WU15\, 7. kolo\nZápas vonku
+LOCATION:FK Stupava - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e313d4@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261011T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – MŠK Púchov 1:1
+DESCRIPTION:II. liga žiačok WU15\, 9. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e314be@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261018T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – FC Nitra 0:1
+DESCRIPTION:II. liga žiačok WU15\, 10. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e31746@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261025T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: KFC Komárno futbal – FK Senica U15 dievčatá 0
+ :2
+DESCRIPTION:II. liga žiačok WU15\, 11. kolo\nZápas vonku
+LOCATION:Futbalové ihrisko Čalovec
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e316f1@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261030T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – GFC regionálna akad
+ émia B 2:4
+DESCRIPTION:II. liga žiačok WU15\, 12. kolo\nDomáci zápas
+LOCATION:FK Senica - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e316ed@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261108T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FC ViOn Zlaté Moravce - Vráble – FK Senica U15
+  dievčatá 4:1
+DESCRIPTION:II. liga žiačok WU15\, 13. kolo\nZápas vonku
+LOCATION:FC ViOn Zlaté Moravce - UT
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641bd14e91f303e31920@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20261115T120000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – FK Slovan Levice 3:4
+DESCRIPTION:II. liga žiačok WU15\, 14. kolo\nDomáci zápas
+LOCATION:FK Senica
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641bd14e91f303e31963@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270228T180000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: SDM Domino – FK Senica U15 dievčatá
+DESCRIPTION:II. liga žiačok WU15\, 15. kolo\nZápas vonku
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641ad14e91f303e3177e@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270307T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: FK Senica U15 dievčatá – FKM Stupava
+DESCRIPTION:II. liga žiačok WU15\, 16. kolo\nDomáci zápas
+END:VEVENT
+BEGIN:VEVENT
+UID:zapas-6a4e641bd14e91f303e31ab3@fk-senica.sportnet
+DTSTAMP:20261117T133801Z
+DTSTART;TZID=Europe/Bratislava:20270321T130000
+DURATION:PT2H
+SUMMARY:U15 dievčatá: MŠK Púchov – FK Senica U15 dievčatá
+DESCRIPTION:II. liga žiačok WU15\, 18. kolo\nZápas vonku
+END:VEVENT
+END:VCALENDAR
