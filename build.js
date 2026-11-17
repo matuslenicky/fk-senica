@@ -161,11 +161,17 @@ const winterNow = !!nextA && (dObj(nextA.date) - dObj(TODAY)) / 864e5 > 14;
 const youth = teams.filter((t) => !t.adult);
 const ourName = (t) => (t.adult ? club.nazov : `${club.kratky || club.mesto} ${t.short}`);
 // skratka klubu („TJ“, „OFK“) nezostane na konci riadka bez mena
-const glueAbbr = (s) => s.replace(/(^|\s)(TJ|FK|FC|MFK|MFC|OŠK|ŠK|OFK|MŠK|PFK|ZFC|TFK|SDM|AFC|OTJ|ŠC|PŠK|FKS) (?=\S)/g, `$1$2${NB}`);
+const glueAbbr = (s) => s.replace(/(^|\s)([A-ZÁČĎÉÍĽĹŇÓŔŠŤÚÝŽ]{2,4}-[A-ZÁČĎÉÍĽĹŇÓŔŠŤÚÝŽ]{2,4}) (?=\S)/g, `$1<span class="nw">$2</span>${NB}`).replace(/(^|\s)(TJ|FK|FC|MFK|MFC|OŠK|ŠK|OFK|MŠK|PFK|ZFC|TFK|SDM|AFC|OTJ|ŠC|PŠK|FKS) (?=\S)/g, `$1$2${NB}`);
 const venueName = (v) => v.replace(/\s+/g, ' ').trim().replace(/(^|\s)č\.\s*(\d)/g, '$1č. $2');
 const pw = (n, a, b, c) => (n === 1 ? a : n >= 2 && n <= 4 ? b : c); // tvar slova podľa počtu
 // zápasy na úvod: bez prípraviek (U11 a mladší) a bez opakovaných riadkov (rovnaký súper v ten istý deň)
-const homePick = (list, n) => { const seen = new Set(); return list.filter((m) => !isPrep(m.teamObj)).filter((m) => { const k = `${m.date}|${m.opponent}`; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, n); };
+const homePick = (list, n) => {
+  const seen = new Set();
+  const cand = list.filter((m) => !isPrep(m.teamObj)).filter((m) => { const k = `${m.date}|${m.opponent}`; if (seen.has(k)) return false; seen.add(k); return true; });
+  const a = cand.filter((m) => m.teamObj === A).slice(0, Math.ceil(n / 2));
+  const rest = cand.filter((m) => !a.includes(m)).slice(0, n - a.length);
+  return cand.filter((m) => a.includes(m) || rest.includes(m)); // áčko má prednosť, poradie zoznamu ostáva
+};
 const homeUp = (n = 5) => homePick(upcoming, n);
 const homeRes = (n = 5) => homePick(results.filter((x) => x.score), n);
 const MON3 = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec'];
@@ -359,7 +365,7 @@ for (const m of matches) {
     body: (R) => {
       const ev = [...(m.goals || []).map((g) => ({ ...g, t: 'goal' })), ...(m.cards || []).map((c) => ({ ...c, t: 'card' })), ...((m.lineups?.subs) || []).map((s) => ({ ...s, t: 'sub' }))]
         .sort((a, b) => (parseInt(a.min, 10) || 0) - (parseInt(b.min, 10) || 0));
-      const evIcon = (e) => e.t === 'goal' ? `<span class="ev-i ev-goal" aria-hidden="true">${I.ball}</span>` : e.t === 'card' ? `<span class="ev-i ev-card ev-card--${e.kind}" aria-hidden="true"></span>` : '<span class="ev-i ev-sub" aria-hidden="true">⇄</span>';
+      const evIcon = (e) => e.t === 'goal' ? `<span class="ev-i ev-goal" aria-hidden="true">${I.ball}</span>` : e.t === 'card' ? `<span class="ev-i ev-card ev-card--${e.kind}" aria-hidden="true"></span>` : '<span class="ev-i ev-sub" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h11l-3-3M14 11H3l3 3"/></svg></span>';
       const evText = (e) => e.t === 'goal' ? (e.kind === 'own' ? `Vlastný gól: ${esc(e.player)}` : `Gól: ${esc(e.player)}${e.kind === 'penalty' ? ' (z penalty)' : ''}`) : e.t === 'card' ? `${e.kind === 'yellow' ? 'Žltá karta' : e.kind === 'red' ? 'Červená karta' : 'Druhá žltá a červená'}: ${esc(e.player) || 'hráč neuvedený'}` : `Striedanie: prichádza ${esc(e.in)}, odchádza ${esc(e.out)}`;
       const evSide = (e) => ((e.side === 'our') === m.home ? 'h' : 'a');
       const prevMeet = matches.filter((x) => x.oppSpace === m.oppSpace && x.id !== m.id && x.team === m.team && x.score);
@@ -368,7 +374,7 @@ for (const m of matches) {
 <section class="sec sec--first"><div class="wrap match">
   <div class="match-card">${card(m, R, { big: true, self: true, label: m.score ? 'Konečný výsledok' : 'Zápas' })}</div>
   <div class="match-info">
-    ${ev.length ? `<h2 class="h3">Priebeh</h2><ol class="evs">${ev.map((e) => `<li class="ev ev--${evSide(e)}"><span class="ev-min">${esc(e.min)}′</span>${evIcon(e)}<span>${evText(e)}<small>${esc(e.side === 'our' ? club.nazov : m.opponent)}</small></span></li>`).join('')}</ol>` : ''}
+    ${ev.length ? `<h2 class="h3">Priebeh</h2><ol class="evs">${ev.map((e) => `<li class="ev ev--${evSide(e)}"><span class="ev-min">${esc(e.min)}’</span>${evIcon(e)}<span>${evText(e)}<small>${esc(e.side === 'our' ? club.nazov : m.opponent)}</small></span></li>`).join('')}</ol>` : ''}
     <dl class="kv">
       <div><dt>Dátum</dt><dd>${dLong(m.date)}${m.time ? `, ${esc(m.time)}` : ''}</dd></div>
       ${m.venue ? `<div><dt>Ihrisko</dt><dd>${esc(venueName(m.venue))}</dd></div>` : ''}
@@ -491,20 +497,21 @@ const SKIN = {
 };
 const NAV = [['zapasy/', 'Zápasy'], ['tabulky/', 'Tabuľky'], ['timy/', 'Tímy'], ['klub/', 'Klub'], ['kontakt/', 'Kontakt']];
 const DESC = `${club.nazov} – futbal v Senici od roku ${club.zalozenie}. Zápasy, výsledky, tabuľky a súpisky áčka (${A.leagueName}) a mládeže, dva druhé miesta v najvyššej súťaži a štarty v Európskej lige.`;
-const orn = '<p class="orn" aria-hidden="true">✦</p>';
+const orn = '<p class="orn" aria-hidden="true"><i></i></p>';
 
 add('', {
   title: 'Záhoráci od roku 1921', active: '', bodyClass: 'home',
   body: (R) => {
     const m = nextA || lastA;
-    const wl = winterLine();
-    const vs = m ? (m.home ? `FK Senica <i>–</i> ${esc(m.opponent)}` : `${esc(m.opponent)} <i>–</i> FK Senica`) : esc(club.nazov);
+    const wl = m && !m.past ? '' : winterLine(); // pri najbližšom zápase by veta o zimnej prestávke opakovala dátum a súpera
+    // „ZFC 1939“ ani „FK Senica“ sa v titulku nerozdelia, pomlčka nezačne riadok
+    const vs = m ? (m.home ? `FK${NB}Senica${NB}<i>–</i> ${glueAbbr(esc(m.opponent))}` : `${glueAbbr(esc(m.opponent))}${NB}<i>–</i> FK${NB}Senica`) : esc(club.nazov);
     return `<section class="cover"><div class="wrap cover-in">
   <p class="cover-k">Zápasový bulletin · ${esc(A.leagueName)}${m?.roundName ? ` · ${esc(m.roundName)}` : ''}</p>
   <img class="cover-crest" src="${R}img/erb-240.webp" alt="${esc(club.erbAlt)}" width="${Math.round(120 * CREST_R)}" height="120">
   <h1 class="cover-h">${vs}${m?.score ? ` <span class="cover-sc">${esc(m.score)}</span>` : ''}</h1>
-  ${m ? `<p class="cover-d">${m.past ? 'Posledný zápas · ' : ''}<time datetime="${m.date}">${dLong(m.date)}</time>${m.time && !m.past ? ` · ${esc(m.time)}` : ''} · ${m.home ? esc(ST.nazov) : esc(venueName(m.venue || 'vonku'))}</p>` : ''}
-  ${m && !m.past ? `<p class="cover-cd"><span class="cd" data-kickoff="${isoLocal(m.date, m.time)}" hidden></span></p>` : ''}
+  ${m ? `<p class="cover-d">${m.past ? 'Posledný zápas · ' : ''}<time datetime="${m.date}">${dLong(m.date)}</time>${m.time && !m.past ? ` · ${esc(m.time)}` : ''} · ${m.home ? glueAbbr(esc(ST.nazov)) : glueAbbr(esc(venueName(m.venue || 'vonku')))}</p>` : ''}
+  ${m && !m.past && !winterNow ? `<p class="cover-cd"><span class="cd" data-kickoff="${isoLocal(m.date, m.time)}" hidden></span></p>` : ''}
   ${wl ? `<p class="cover-p">${wl}</p>` : ''}
   <p class="btns">${m && !m.past ? `<a class="btn" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Do kalendára</a>` : ''}<a class="btn btn--line" href="${R}zapasy/">Program a výsledky</a></p>
 </div></section>
@@ -529,7 +536,7 @@ add('', {
 
 add('klub/', {
   title: 'Klub', active: 'klub/', desc: `${club.nazov}: od roku ${club.zalozenie}, najvyššia súťaž 2009 – 2022, Európska liga, nový začiatok v roku 2022 a štadión OMS Arena.`,
-  body: (R) => `${pageHead({ title: 'Záhoráci od roku 1921', sub: `${esc(club.pravnyNazov)}. Farby ${esc(club.farby)}.`, R, crumbs: [[null, 'Klub']] })}
+  body: (R) => `${pageHead({ title: 'Záhoráci od roku 1921', sub: `${esc(club.pravnyNazov).replace(/\.$/, '')}. Farby ${esc(club.farby)}.`, R, crumbs: [[null, 'Klub']] })}
 <section class="sec sec--first"><div class="wrap book">
   <h2 class="h2">História</h2>
   <ol class="hist">${club.historia.map((h) => `<li><b>${esc(h.rok)}</b><p>${esc(h.text)}</p></li>`).join('')}</ol>
