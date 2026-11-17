@@ -6,14 +6,15 @@ Ukážka: https://matuslenicky.github.io/fk-senica/ · administrácia (ukážka 
 
 ## Vzhľad
 
-**„Tribúna“.** Senica má štadión pre 5 070 divákov z roku 1962 a klub, ktorý hral najvyššiu súťaž aj Európsku ligu, po krachu v roku 2022 začal odznova vo VIII. lige.
+**„Bulletin“ (dizajn v2, 17. 11. 2026).** Krémový papier, tmavomodrá a červená z klubových farieb, ozdobné linky. Písmo Abril Fatface (titulky) a Crimson Pro (text).
 
-- čísla a nápisy (SENICA, poradie áčka, kapacita štadióna) sú poskladané **zo sedadiel ako mozaika na tribúne** (inline SVG, písmo 5 × 7),
-- farby z prstenca erbu: **prechod z červenej cez fialovú do modrej** ako linka pod hlavičkou, na tabuliach a v päte, tmavomodré plochy ako tribúny,
-- zápasová karta ako **tabuľa na štadióne**, hlavička podstránok s radom sedadiel,
-- „Štyri sezóny po krachu“ (2022 → V. liga), Senica v Európskej lige 2011 – 2013, akadémia so 13 mládežníckymi tímami vrátane dievčat,
-- menu na telefóne ako **sektory tribún okolo ihriska** (ihrisko = úvod),
-- písmo **Saira Condensed** (ako tabule na štadióne) a **IBM Plex Sans**.
+- úvod ako obálka zápasového bulletinu: kolo, erb, súperi a výkop v strede, odpočet,
+- pod obálkou dvojstrana: vľavo výsledky a program, vpravo celá tabuľka ligy,
+- pás „Senica v Európe“ so štartmi v Európskej lige 2011 – 2013,
+- stránka Klub ako kapitola v knihe: história, úspechy, rival a štadión OMS Arena,
+- menu na telefóne je tmavomodrá plocha cez celú obrazovku.
+
+Web sa skladá zo spoločného jadra v2 (`kluby-siet/engine`: `python assemble.py <web>`), vlastný je `src/site.js` (úvod, Klub, nastavenia) a `src/css/skin.css`.
 
 ## Obsah a zdroje
 

@@ -1,9 +1,8 @@
 // Statický generátor webu FK Senica: data/ + src/ -> dist/   (node build.js; TODAY=2026-11-17 prepíše dnešný dátum)
-// Obsah: zápasy, tabuľky a súpisky 14 tímov zo Sportnetu (data/sportnet.json, scripts/sportnet.mjs), údaje o klube z data/klub.json
-// (len zo zverejnených zdrojov: Wikipédia – FK Senica a Štadión FK Senica, Záhorák, Sportnet), erby zo Sportnetu (scripts/logos.py).
-// Podpis vzhľadu „Tribúna“: štadión pre 5 070 divákov z roku 1962 a klub, ktorý po krachu v roku 2022 začal odznova. Čísla
-// (rok 1921, skóre, poradie, kapacita) sú poskladané zo sedadiel ako mozaika na tribúne, farby z prstenca erbu (červená do modrej),
-// menu na telefóne ako sektory tribún okolo ihriska. Písmo Saira Condensed (ako tabule na štadióne) a IBM Plex Sans.
+// Zostavuje ho kluby-siet/engine/assemble.py zo spoločného jadra v2 a tohto súboru (vzhľad, úvod, stránka Klub).
+// Kostra „Bulletin“: úvod ako obálka zápasového bulletinu (číslo kola, erb, súperi a výkop v strede), pod ňou dvojstrana
+// s výsledkami, programom a tabuľkou, pás so štartmi v Európe a riadok faktov. Krémový papier, tmavomodrá a červená
+// z klubových farieb, ozdobné linky. Písmo Abril Fatface (titulky) a Crimson Pro (text).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -50,23 +49,27 @@ function isoLocal(date, time = '12:00') {
 const acc = (league) => league.replace(/\bliga\b/, 'ligu'); // 4. pád: hrajú IV. ligu
 const vLige = (league) => `${/^IV\./.test(league) ? 'vo' : 'v'} ${esc(league.replace(/\bliga\b/, 'lige'))}`; // 6. pád: vo IV. lige, v VII. lige
 const SEASON = sn.season.replace(/^(\d{4})\/\d\d(\d\d)$/, '$1/$2');
-const plural = (n, a, b, c) => `${n} ${n === 1 ? a : n >= 2 && n <= 4 ? b : c}`;
-const zo = (n) => `${/^(4|6|7|1[467]|[467]\d)$/.test(String(n)) ? 'zo' : 'z'} ${n}`; // „zo 16“, „z 11“ (podľa výslovnosti čísla)
+const plural = (n, a, b, c) => `${n} ${n === 1 ? a : n >= 2 && n <= 4 ? b : c}`; // číslo a slovo bez zlomu riadka („4 body“)
+const zo = (n) => `${/^(4|6|7|1[467]|[467]\d)$/.test(String(n)) ? 'zo' : 'z'} ${n}`; // „zo 16“, „z 11“ (podľa výslovnosti čísla)
 const num = (n) => Number(n).toLocaleString('sk-SK');
 const nazov = (n) => club.nazvy?.[n] || n; // čitateľný názov súpera (úradné názvy a veľké písmená zo Sportnetu)
 
 // ---- súťaže, tímy, zápasy ------------------------------------------------------------------------
 const compName = (name) => club.sutaze[name] || club.sutaze[name.replace(/\s+/g, ' ').trim()] || name.replace(/\s+/g, ' ').replace(/-ObFZ TN/, ' ObFZ Trenčín').replace(/\s*Macron \| yoursport\s*/, ' ').replace(/-/g, ' ').trim();
-const ROUND = (r) => (/^\d+$/.test(r) ? `${r}. kolo` : String(r || '').replace(/\.\s*kolo/i, '. kolo').replace(/Kolo/, 'kolo'));
+const ROUND = (r) => (/^\d+$/.test(r) ? `${r}. kolo` : String(r || '').replace(/\.\s*kolo/i, '. kolo').replace(/Kolo/, 'kolo').replace(/^Kvalifika/, 'kvalifika')); // stojí za čiarkou: „…, kvalifikačné stretnutie“
 const teams = sn.teams.map((t) => {
-  const league = t.competitions.find((c) => !c.cup);
+  // ligová súťaž = časť s najväčšou tabuľkou (áčko má v tej istej súťaži aj kvalifikačné stretnutie s tabuľkou o 2 tímoch)
+  const league = t.competitions.filter((c) => !c.cup).sort((a, b) => (sn.tables[b.key]?.rows.length || 0) - (sn.tables[a.key]?.rows.length || 0))[0];
   // tabuľka prípraviek bez zapísaných výsledkov (všetci 0:0, body len za účasť) by klamala, preto sa neukazuje
   const raw = league ? sn.tables[league.key] : null;
-  const table = raw && raw.rows.some((r) => r.gf || r.ga) ? raw : null;
+  // ak náš klub výsledky prípravky nezapisuje (len 0:0), poradie by ho stavalo na chvost, preto tiež bez tabuľky
+  const ourRaw = raw?.rows.find((r) => r.our);
+  const prepNoScore = /^U(\d|1[01])\b/.test(t.short) && ourRaw && !ourRaw.gf && !ourRaw.ga;
+  const table = raw && raw.rows.some((r) => r.gf || r.ga) && !prepNoScore ? raw : null;
   const pos = table?.rows.find((r) => r.our);
   return {
     ...t, url: `timy/${t.slug}/`, code: t.adult ? t.slug[0] : norm(t.short).replace(/-/g, ''),
-    full: t.adult ? t.short : `${t.short} ${t.sub}`,
+    full: t.adult ? t.short : `${t.sub} ${t.short}`,
     leagueName: league ? compName(league.name) : '', leagueKey: league?.key || '', table, pos: pos?.pos || null, of: table?.rows.length || 0,
   };
 });
@@ -74,6 +77,7 @@ const teams = sn.teams.map((t) => {
 for (let i = teams.length - 1; i >= 0; i--) if (!sn.matches.some((m) => m.team === teams[i].slug)) teams.splice(i, 1);
 const bySlug = Object.fromEntries(teams.map((t) => [t.slug, t]));
 // kolo bez súpera (voľno) vedie Sportnet ako zápas s prázdnym súperom: na webe by z neho bol riadok bez mena
+const PART = Object.fromEntries(sn.teams.flatMap((t) => t.competitions.map((x) => [x.key, x.part || '']))); // názov časti súťaže (napr. Kvalifikačné stretnutie)
 const matches = sn.matches.filter((m) => String(m.opponent || '').trim() && bySlug[m.team]).map((m) => {
   const t = bySlug[m.team];
   const past = m.played || m.date < TODAY;
@@ -83,14 +87,15 @@ const matches = sn.matches.filter((m) => String(m.opponent || '').trim() && bySl
   if (m.score) { const [h, a] = m.score.split(':').map(Number); [gf, ga] = m.home ? [h, a] : [a, h]; res = gf > ga ? 'w' : gf < ga ? 'l' : 'd'; }
   const opponent = nazov(m.opponent);
   const slug = `${m.date}-${t.code}-${norm(opponent)}`;
-  return { ...m, opponent, past, gf, ga, res, slug, url: `zapasy/${slug}/`, comp: compName(m.competition), roundName: ROUND(m.round), teamObj: t, cup: /cup|pohár/i.test(m.competition) };
+  return { ...m, opponent, past, gf, ga, res, slug, url: `zapasy/${slug}/`, comp: compName(m.competition), roundName: ROUND(m.round) || (/kvalifik/i.test(PART[m.comp] || '') ? 'kvalifikácia' : ''), teamObj: t, cup: /cup|pohár/i.test(m.competition) };
 });
 const teamMatches = (slug) => matches.filter((m) => m.team === slug);
 const upcoming = matches.filter((m) => !m.past);
 const results = matches.filter((m) => m.past).reverse();
 const RES = { w: 'Výhra', d: 'Remíza', l: 'Prehra' };
 const RES_S = { w: 'V', d: 'R', l: 'P' };
-const noScore = (m) => (m.teamObj.adult ? 'Sportnet výsledok neuvádza' : 'Výsledky prípraviek sa nezapisujú');
+const isPrep = (t) => /^U(\d|1[01])\b/.test(t.short); // prípravky (U11 a mladší) výsledky nezapisujú
+const noScore = (m) => (isPrep(m.teamObj) ? 'Výsledky prípraviek sa nezapisujú' : 'Sportnet výsledok neuvádza');
 
 // strelci tímu v sezóne (vlastné góly sa nerátajú)
 function scorers(slug) {
@@ -105,7 +110,7 @@ function record(slug, filter = () => true) {
 }
 
 // ---- erby ----------------------------------------------------------------------------------------
-const CREST_R = 1; // erb je kruh
+const CREST_R = 480 / 480; // pomer strán erbu (šírka / výška), dopočíta assemble.py
 const logoFile = (space) => space && fs.existsSync(path.join(SRC, 'img', 'kluby', `${space}.webp`));
 const initials = (name) => String(name).replace(/^(TJ|OŠK|OFK|ŠK|FK|FC|MFK|MŠK|PFK|TFK|PŠK|ZFC|OTJ|AFC|TTS|Telovýchovná jednota)\s+/i, '').split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 function logo(space, name, R, size = 40, eager = false) {
@@ -132,10 +137,10 @@ const I = {
   users: ico('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>'),
 };
 
-// ---- CSP a rozloženie ----------------------------------------------------------------------------
-// GitHub Pages nedovolí hlavičky, preto <meta>: skripty len z webu, jediný inline skript HEAD_JS povolený hashom.
-// .flt: zoznam zápasov s filtrom v adrese (?tim=, ?kde=) je neviditeľný, kým ho site.mjs nevyfiltruje (inak skáče);
-// pri zlyhaní site.mjs ho odkryje udalosť load
+// ---- CSP a rozloženie (spoločné jadro v2, kluby-siet/engine/engine.js) ---------------------------
+// Jadro nevnucuje vzhľad: kostru úvodu, hlavičku (SKIN.nav), zoznam zápasov (SKIN.list), písmo a farby určuje web
+// v src/site.js (SKIN, NAV, DESC, úvod a stránka Klub) a v src/css/skin.css. Inline atribút style CSP nepustí.
+// .flt: zoznam zápasov s filtrom v adrese (?tim=, ?kde=) je neviditeľný, kým ho site.mjs nevyfiltruje (inak skáče)
 const HEAD_JS = `var d=document.documentElement;d.classList.add('js');if(/[?&](tim|kde)=/.test(location.search)){d.classList.add('flt');addEventListener('load',function(){d.classList.remove('flt')})}`;
 const sha256 = (s) => `'sha256-${crypto.createHash('sha256').update(s, 'utf8').digest('base64')}'`;
 const CONNECT = ["'self'", ...(config.supabase?.url ? [new URL(config.supabase.url).origin] : [])];
@@ -144,60 +149,51 @@ const CSP = [
   `connect-src ${CONNECT.join(' ')}`, "base-uri 'none'", "form-action 'none'", "object-src 'none'", "manifest-src 'self'",
 ].join('; ');
 
-// sedadlová mozaika: písmo 5 × 7 z obsadených (farebných) a prázdnych sedadiel ako nápis na tribúne
-const SEAT_FONT = {
-  0: ['01110', '10001', '10011', '10101', '11001', '10001', '01110'], 1: ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
-  2: ['01110', '10001', '00001', '00010', '00100', '01000', '11111'], 3: ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
-  4: ['00010', '00110', '01010', '10010', '11111', '00010', '00010'], 5: ['11111', '10000', '11110', '00001', '00001', '10001', '01110'],
-  6: ['00110', '01000', '10000', '11110', '10001', '10001', '01110'], 7: ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
-  8: ['01110', '10001', '10001', '01110', '10001', '10001', '01110'], 9: ['01110', '10001', '10001', '01111', '00001', '00010', '01100'],
-  ':': ['0', '0', '1', '0', '1', '0', '0'], '.': ['0', '0', '0', '0', '0', '1', '1'], '-': ['000', '000', '000', '111', '000', '000', '000'], ' ': ['00', '00', '00', '00', '00', '00', '00'],
-  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'], E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
-  N: ['10001', '11001', '10101', '10011', '10001', '10001', '10001'], I: ['111', '010', '010', '010', '010', '010', '111'],
-  C: ['01110', '10001', '10000', '10000', '10000', '10001', '01110'], A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
-};
-function seats(text, { cls = 'seats', pad = 0, label } = {}) {
-  const glyphs = [...String(text)].map((c) => SEAT_FONT[c.toUpperCase()] || SEAT_FONT[' ']);
-  const rows = 7 + pad * 2;
-  const grid = Array.from({ length: rows }, () => []);
-  glyphs.forEach((g, gi) => {
-    for (let r = 0; r < rows; r++) {
-      const line = r >= pad && r < pad + 7 ? g[r - pad] : '0'.repeat(g[0].length);
-      for (const ch of line) grid[r].push(ch === '1');
-      if (gi < glyphs.length - 1) grid[r].push(false);
-    }
-  });
-  const cols = grid[0].length, W = 10, H = 9;
-  const rects = grid.map((row, r) => row.map((on, c) => `<rect x="${c * W}" y="${r * H}" width="8" height="7" rx="2"${on ? ' class="on"' : ''}/>`).join('')).join('');
-  return `<svg class="${cls}" viewBox="0 0 ${cols * W - 2} ${rows * H - 2}" role="img" aria-label="${esc(label ?? text)}" focusable="false">${rects}</svg>`;
-}
-
-// menu: na počítači v riadku vpravo od erbu, na telefóne celoobrazovkový panel so sektormi tribún okolo ihriska (<dialog>)
-const NAV = [['zapasy/', 'Zápasy'], ['tabulky/', 'Tabuľky'], ['timy/', 'Tímy'], ['mladez/', 'Akadémia'], ['klub/', 'Klub'], ['stadion/', 'Štadión'], ['kontakt/', 'Kontakt']];
-const ST = club.stadion;
+const ST = club.stadion || club.ihrisko;
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${ST.geo.join(',')}`;
-const mapyUrl = `https://mapy.com/fnc/v1/showmap?mapset=basic&amp;center=${ST.geo[1]},${ST.geo[0]}&amp;zoom=16&amp;marker=true`; // mapy.com/s/?q= vracia 404
+const mapyUrl = `https://mapy.com/fnc/v1/showmap?mapset=basic&amp;center=${ST.geo[1]},${ST.geo[0]}&amp;zoom=16&amp;marker=true`;
 const A = teams[0];
-const ligaG = A.leagueName.replace(/^([IVX]+\.) liga\b.*/, '$1 ligy');
-const DESC = `${club.nazov} – futbal v Senici od roku ${club.zalozenie}. Zápasy, výsledky, tabuľky a súpisky áčka (${A.leagueName}) a ${plural(teams.length - 1, 'mládežníckeho tímu', 'mládežníckych tímov', 'mládežníckych tímov')}, Európska liga a štadión pre ${num(ST.kapacita)} divákov.`;
+const YEAR = Number(TODAY.slice(0, 4));
 const nextHome = upcoming.find((m) => m.home && m.team === A.slug);
-const SECTORS = 'ABCDEFGH';
+const nextA = upcoming.find((m) => m.team === A.slug);
+const lastA = [...teamMatches(A.slug)].reverse().find((m) => m.past && m.score);
+const winterNow = !!nextA && (dObj(nextA.date) - dObj(TODAY)) / 864e5 > 14;
+const youth = teams.filter((t) => !t.adult);
+const ourName = (t) => (t.adult ? club.nazov : `${club.kratky || club.mesto} ${t.short}`);
+// skratka klubu („TJ“, „OFK“) nezostane na konci riadka bez mena
+const glueAbbr = (s) => s.replace(/(^|\s)(TJ|FK|FC|MFK|MFC|OŠK|ŠK|OFK|MŠK|PFK|ZFC|TFK|SDM|AFC|OTJ|ŠC|PŠK|FKS) (?=\S)/g, `$1$2${NB}`);
+const venueName = (v) => v.replace(/\s+/g, ' ').trim().replace(/(^|\s)č\.\s*(\d)/g, '$1č. $2');
+const pw = (n, a, b, c) => (n === 1 ? a : n >= 2 && n <= 4 ? b : c); // tvar slova podľa počtu
+const MON3 = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+// ---- kostra stránky ------------------------------------------------------------------------------
+const navItems = (R, active, home = false) => (home ? [['', 'Úvod'], ...NAV] : NAV).map(([u, t]) => `<li><a href="${R}${u}"${active === u && (u || home) ? ' aria-current="page"' : ''}>${t}</a></li>`).join('');
+const brand = (R, route, cls = 'brand') => `<a class="${cls}" href="${R}"${route ? '' : ' aria-current="page"'}><img src="${R}img/erb-128.webp" alt="" width="${Math.round(44 * CREST_R)}" height="44"><span class="brand-t"><span class="brand-n">${esc(SKIN.brand)}</span>${SKIN.brandSub ? `<span class="brand-s">${esc(SKIN.brandSub)}</span>` : ''}</span><span class="sr">, úvod</span></a>`;
+const menuBtn = `<button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-haspopup="dialog">${I.menu}<span>Menu</span></button>`;
 
 function layout({ route, title, desc, body, active, bodyClass = '' }) {
   const depth = route.split('/').filter(Boolean).length;
   const R = depth ? '../'.repeat(depth) : './';
-  const cur = (u) => (active && active === u ? ' aria-current="page"' : '');
   const fullTitle = (config.ukazka ? 'Návrh webu – ' : '') + (route ? `${title} | ${club.nazov}` : `${club.nazov} – ${title}`);
   const canon = config.siteUrl ? `${config.siteUrl}${route}` : '';
   const ld = route ? '' : `<script type="application/ld+json">${JSON.stringify({
-    '@context': 'https://schema.org', '@type': 'SportsClub', name: club.nazov, legalName: club.pravnyNazov, sport: 'Futbal', foundingDate: String(club.zalozenie),
+    '@context': 'https://schema.org', '@type': 'SportsClub', name: club.nazov, sport: 'Futbal', ...(club.zalozenie ? { foundingDate: String(club.zalozenie) } : {}),
     email: club.kontakt.email,
     address: { '@type': 'PostalAddress', streetAddress: club.adresa[0], postalCode: club.adresa[1].slice(0, 6), addressLocality: club.mesto, addressCountry: 'SK' },
-    location: { '@type': 'StadiumOrArena', name: ST.nazov, maximumAttendeeCapacity: ST.kapacita, geo: { '@type': 'GeoCoordinates', latitude: ST.geo[0], longitude: ST.geo[1] } },
-    sameAs: [club.sportnetUrl],
+    location: { '@type': 'StadiumOrArena', name: ST.nazov, geo: { '@type': 'GeoCoordinates', latitude: ST.geo[0], longitude: ST.geo[1] } },
+    sameAs: [club.sportnetUrl, club.kontakt.facebook].filter(Boolean),
   }).replace(/</g, '\\u003c')}</script>`;
-  const li = ([u, t]) => `<li><a href="${R}${u}"${cur(u)}>${t}</a></li>`;
-  const sector = ([u, t], i) => `<li><a href="${R}${u}"${cur(u)}><span class="sec-k">Sektor ${SECTORS[i + 1]}</span><span class="sec-t">${t}</span></a></li>`;
+  const nav = `<nav class="nav" aria-label="Hlavné menu"><ul>${navItems(R, active)}</ul></nav>`;
+  const header = SKIN.nav === 'mast'
+    ? `<header class="hdr hdr--mast"><div class="wrap hdr-in">${brand(R, route)}${menuBtn}</div><div class="wrap hdr-nav">${nav}</div></header>`
+    : `<header class="hdr hdr--${SKIN.nav}"><div class="wrap hdr-in">${brand(R, route)}${SKIN.nav === 'side' ? '' : nav}${menuBtn}</div></header>`;
+  const side = SKIN.nav === 'side' ? `<aside class="side" aria-label="Klub">${brand(R, route, 'brand brand--side')}<nav class="side-nav" aria-label="Hlavné menu"><ul>${navItems(R, active, true)}</ul></nav>${nextA ? `<a class="side-next" href="${R}${nextA.url}"><span>Najbližší zápas áčka</span><b>${esc(nextA.opponent)}</b><span>${dDay(nextA.date)} ${dShort(nextA.date)} · ${esc(nextA.time || '')} · ${nextA.home ? 'doma' : 'vonku'}</span></a>` : ''}</aside>` : '';
+  const footer = `<footer class="ftr"><div class="wrap ftr-in">
+  <div class="ftr-id"><img src="${R}img/erb-128.webp" alt="" width="${Math.round(48 * CREST_R)}" height="48" loading="lazy"><div><p class="ftr-name">${esc(club.nazov)}</p><p>${esc(ST.nazov)}, ${club.adresa.map(esc).join(', ')}</p></div></div>
+  <ul class="ftr-links"><li><a href="${mapsUrl}" rel="noopener">Navigovať na ihrisko</a></li><li><a href="mailto:${club.kontakt.email}">${esc(club.kontakt.email).replace('@', '<wbr>@')}</a></li>${club.kontakt.facebook ? `<li><a href="${club.kontakt.facebook}" rel="noopener">Facebook</a></li>` : ''}<li><a href="${club.sportnetUrl}" rel="noopener">Sportnet</a></li></ul>
+  <p class="ftr-src">Výsledky zo Sportnetu, aktualizované ${dFull(sn.updated.slice(0, 10))}. ${esc(SKIN.sources || '')}</p>
+</div><div class="wrap ftr-bar"><span>© ${new Date().getFullYear()} ${esc(club.pravnyNazov || club.nazov)}</span><a href="${R}ochrana-sukromia/">Ochrana súkromia</a>${config.adminDemo ? `<a href="${R}admin/">Administrácia (ukážka)</a>` : ''}</div></footer>`;
+  const inner = `<main id="obsah">\n${body}\n</main>\n${footer}`;
   return `<!doctype html>
 <html lang="sk" data-root="${R}"${config.ukazka ? ' class="has-demo"' : ''}>
 <head>
@@ -210,282 +206,128 @@ function layout({ route, title, desc, body, active, bodyClass = '' }) {
 ${config.noindex ? '<meta name="robots" content="noindex">\n' : ''}${canon ? `<link rel="canonical" href="${canon}">\n` : ''}<meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="sk_SK">
-<meta name="theme-color" content="#141a45">
+<meta name="theme-color" content="${SKIN.theme}">
 <link rel="icon" type="image/png" href="${R}img/favicon.png">
 <link rel="apple-touch-icon" href="${R}img/apple-touch-icon.png">
-<link rel="preload" href="${R}fonts/saira-condensed-800.woff" as="font" type="font/woff" crossorigin>
-<link rel="preload" href="${R}fonts/saira-condensed-600.woff" as="font" type="font/woff" crossorigin>
-<link rel="preload" href="${R}fonts/ibm-plex-sans-400.woff" as="font" type="font/woff" crossorigin>
+${SKIN.fonts.map((f) => `<link rel="preload" href="${R}fonts/${f}" as="font" type="font/woff" crossorigin>`).join('\n')}
 <link rel="stylesheet" href="${R}css/site.css">
 <script>${HEAD_JS}</script>
 <script type="module" src="${R}js/site.mjs"></script>
 ${ld}</head>
-<body${bodyClass ? ` class="${bodyClass}"` : ''}>
+<body class="${['v2', bodyClass].filter(Boolean).join(' ')}">
 <a class="skip" href="#obsah">Preskočiť na obsah</a>
 ${config.ukazka ? '<p class="demo">Návrh webu · nie je to oficiálna stránka klubu</p>' : ''}
-<header class="hdr">
-  <div class="wrap hdr-in">
-    <a class="brand" href="${R}"${route ? '' : ' aria-current="page"'}><img src="${R}img/erb-128.webp" alt="" width="46" height="46"><span class="brand-t"><span class="brand-n">${esc(club.nazov)}</span><span class="brand-s">od roku ${club.zalozenie}</span></span><span class="sr">, úvod</span></a>
-    <nav class="nav" aria-label="Hlavné menu"><ul>${NAV.map(li).join('')}</ul></nav>
-    <button class="menu-btn" type="button" aria-haspopup="dialog" aria-controls="menu">${I.menu}<span>Menu</span></button>
-  </div>
-</header>
-<dialog class="menu" id="menu" aria-label="Menu">
-  <div class="menu-top"><img src="${R}img/erb-128.webp" alt="" width="40" height="40" loading="lazy"><span class="menu-name">${esc(club.nazov)}</span><button class="menu-x" type="button" data-close>${I.close}<span>Zavrieť</span></button></div>
-  <nav aria-label="Menu na telefóne" class="stands">
-    <a class="pitch" href="${R}"${route ? '' : ' aria-current="page"'}><span class="sec-k">Ihrisko</span><span class="sec-t">Úvod</span></a>
-    <ul class="sectors">${NAV.map(sector).join('')}</ul>
-  </nav>
-  <p class="menu-foot"><a href="mailto:${club.kontakt.email}">${I.mail}${esc(club.kontakt.email)}</a></p>
-</dialog>
-<main id="obsah">
-${body}
-</main>
-<footer class="ftr">
-  <div class="wrap ftr-grid">
-    <div class="ftr-club">
-      <img src="${R}img/erb-240.webp" alt="" width="80" height="80" loading="lazy">
-      <p class="ftr-name">${esc(club.nazov)}</p>
-      <p class="ftr-motto">Futbal v Senici od roku ${club.zalozenie}.</p>
-    </div>
-    <div><h2 class="ftr-h">Štadión</h2><p>${esc(ST.nazov)} (${esc(ST.obchodny)})<br>${club.adresa.map(esc).join(', ')}</p><p><a href="${mapsUrl}" rel="noopener">Navigovať na štadión</a></p>${nextHome ? `<p>Najbližšie doma: <a href="${R}${nextHome.url}">${dShort(nextHome.date)} o ${esc(nextHome.time || '')} proti ${esc(nextHome.opponent)}</a></p>` : ''}</div>
-    <div><h2 class="ftr-h">Kontakt</h2><p>${esc(club.pravnyNazov)}<br><a href="mailto:${club.kontakt.email}">${esc(club.kontakt.email)}</a></p></div>
-    <div><h2 class="ftr-h">Zdroje</h2><p>Výsledky zo Sportnetu (Futbalnet), aktualizované ${dFull(sn.updated.slice(0, 10))}. História a štadión podľa Wikipédie.</p><p><a href="${club.sportnetUrl}" rel="noopener">Klub na Sportnete</a></p></div>
-  </div>
-  <div class="ftr-bar"><div class="wrap ftr-bar-in"><span>© ${new Date().getFullYear()} ${esc(club.pravnyNazov)}</span><a href="${R}ochrana-sukromia/">Ochrana súkromia</a>${config.adminDemo ? `<a href="${R}admin/">Administrácia (ukážka)</a>` : ''}</div></div>
-</footer>
+${header}
+<dialog class="menu" id="menu" aria-label="Menu"><div class="menu-in">
+  <div class="menu-top"><span class="menu-k">${esc(club.nazov)}</span><button class="menu-x" type="button" data-close>${I.close}<span>Zavrieť</span></button></div>
+  <ul class="menu-nav">${navItems(R, active, true)}</ul>
+</div></dialog>
+${SKIN.nav === 'side' ? `<div class="shell">${side}<div class="shell-main">${inner}</div></div>` : inner}
 </body>
 </html>
 `;
 }
 
 // ---- spoločné bloky ------------------------------------------------------------------------------
-// hlavička podstránky: tmavomodrý pás s nadpisom a radom sedadiel na spodnom okraji (CSS)
-const pageHead = ({ title, sub = '', crumbs = [], R, aside = '' }) => `<section class="phead"><div class="wrap phead-in">
-  <div>${crumbs.length ? `<nav class="crumbs" aria-label="Omrvinky"><a href="${R}">Úvod</a>${crumbs.map(([u, t]) => u ? `<a href="${R}${u}">${esc(t)}</a>` : `<span aria-current="page">${esc(t)}</span>`).join('')}</nav>` : ''}
-  <h1 class="h1">${esc(title).replace(/(^|\s)(TJ|FK|FC|MFK|MFC|OŠK|ŠK|OFK|MŠK|PFK|ZFC|TFK|SDM|AFC|OTJ) (?=\S)/g, `$1$2${NB}`)}</h1>${sub ? `<p class="phead-sub">${sub}</p>` : ''}</div>${aside}
+const pageHead = ({ title, sub = '', crumbs = [], R }) => `<section class="phead"><div class="wrap">
+  ${crumbs.length ? `<nav class="crumbs" aria-label="Omrvinky"><a href="${R}">Úvod</a>${crumbs.map(([u, x]) => u ? `<a href="${R}${u}">${esc(x)}</a>` : `<span aria-current="page">${esc(x)}</span>`).join('')}</nav>` : ''}
+  <h1 class="h1">${glueAbbr(esc(title))}</h1>${sub ? `<p class="phead-sub">${sub}</p>` : ''}
 </div></section>`;
-const secHead = (h, id, moreLink = '', eyebrow = '') => `<div class="sec-head"><div>${eyebrow ? `<p class="eyebrow">${eyebrow}</p>` : ''}<h2 class="h2" id="${id}">${h}</h2></div>${moreLink}</div>`;
+const secHead = (h, id, moreLink = '', kicker = '') => `<div class="sec-head"><div>${kicker ? `<p class="kicker">${kicker}</p>` : ''}<h2 class="h2" id="${id}">${h}</h2></div>${moreLink}</div>`;
 const more = (href, t) => `<a class="more" href="${href}">${t}${I.arrow}</a>`;
-const venueName = (v) => v.replace(/\s+/g, ' ').trim();
+const sc = (m) => (m.score ? `<span class="sc sc--${m.res}"><span class="sr">${RES[m.res]}, </span>${m.gf}:${m.ga}</span>` : `<span class="sc sc--n">–<span class="sr"> ${noScore(m)}</span></span>`);
 
-// zápasová karta: tabuľa na štadióne, tmavomodrá s prstencom z červenej do modrej, výsledok písmom tabule
-function card(m, R, { big = false, label = '', self = false } = {}) {
-  const ourName = m.teamObj.adult ? club.nazov : `${club.nazov} ${m.teamObj.short}`;
-  const us = { name: ourName, space: SPACE }, them = { name: m.opponent, space: m.oppSpace };
-  const [h, a] = m.home ? [us, them] : [them, us];
-  const lbl = label || (m.score || m.past ? 'Posledný zápas' : 'Najbližší zápas');
-  const side = (t, role) => `<div class="mp-side${t.space === SPACE ? ' is-us' : ''}"><span class="mp-crest">${logo(t.space, t.name, R, big ? 56 : 44, big)}</span><span class="mp-name">${esc(t.name)}</span><span class="mp-role">${role}</span></div>`;
-  let mid, note = '';
-  if (m.score) { mid = `<span class="sr">Výsledok </span>${esc(m.score).replace(':', '<span class="mp-colon">:</span>')}`; note = `<span class="mp-res mp-res--${m.res}">${RES[m.res]}</span>${m.half ? `<span>polčas ${esc(m.half)}</span>` : ''}`; }
-  else if (m.past) { mid = '<span aria-hidden="true">–</span>'; note = `<span>${noScore(m)}</span>`; }
-  else { mid = `<span class="mp-time"><span class="sr">Výkop o </span>${esc(m.time || '–')}</span>`; note = `<span class="cd" data-kickoff="${isoLocal(m.date, m.time)}" hidden></span>`; }
-  const links = [];
-  if (m.score && m.detail && !self) links.push(`<a class="mp-a" href="${R}${m.url}">Priebeh a zostavy${I.arrow}</a>`);
-  // na stránke zápasu je pod kartou tlačidlo „Pridať do kalendára“, odkaz v karte by bol druhý na ten istý súbor
-  if (!m.past && !self) links.push(`<a class="mp-a" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Do kalendára</a>`);
-  const meta = [esc(m.comp) + (m.roundName ? `, ${esc(m.roundName)}` : ''), m.venue ? esc(venueName(m.venue)) : '', m.audience ? plural(m.audience, 'divák', 'diváci', 'divákov') : ''].filter(Boolean);
-  return `<article class="mp${big ? ' mp--big' : ''}">
-  <p class="mp-top"><span class="mp-label">${esc(lbl)}</span><span>${esc(m.teamObj.full)}</span></p>
-  <p class="mp-when"><time datetime="${m.date}">${dLong(m.date)}</time></p>
-  <div class="mp-row">${side(h, 'domáci')}<p class="mp-score">${mid}</p>${side(a, 'hostia')}</div>
-  <p class="mp-note">${note}</p>
-  <p class="mp-meta">${meta.join('<span aria-hidden="true">&nbsp;· </span>')}</p>
-  ${links.length ? `<p class="mp-links">${links.join('')}</p>` : ''}
-</article>`;
-}
-
-// riadok zápasu ako svetelná tabuľa štadióna: domáci | skóre (alebo čas výkopu) | hostia, nad tým dátum a súťaž
-function matchRow(m, R, { showTeam = true } = {}) {
-  const us = { name: m.teamObj.adult ? club.nazov : `${club.kratky} ${m.teamObj.short}`, space: SPACE }, them = { name: m.opponent, space: m.oppSpace };
-  const [h, a] = m.home ? [us, them] : [them, us];
-  const side = (t, cls) => `<span class="sb-t ${cls}${t.space === SPACE ? ' is-us' : ''}">${logo(t.space, t.name, R, 28)}<span class="sb-n">${esc(t.name)}</span></span>`;
-  const mid = m.score
-    ? `<span class="sb-s"><span class="sr">${RES[m.res]}, výsledok </span>${esc(m.score).replace(':', '<span class="sb-c">:</span>')}</span><span class="sb-r res-bg--${m.res}" aria-hidden="true">${RES_S[m.res]}</span>`
-    : m.past ? '<span class="sb-s sb-s--none">–</span>' : `<span class="sb-s sb-s--time"><span class="sr">výkop </span>${esc(m.time || '–')}</span>`;
+// zoznam zápasov: jedno značkovanie, vzhľad (riadky, dlaždice, tabuľa) robí skin.css; skóre vždy naše:súper
+function fxRow(m, R, { showTeam = true } = {}) {
   const href = m.detail || !m.past ? ` href="${R}${m.url}"` : '';
   const tag = href ? 'a' : 'div';
-  return `<li class="mrow${m.score ? ' mrow--res' : m.past ? '' : ' mrow--next'}" data-team="${m.team}" data-where="${m.home ? 'doma' : 'vonku'}"><${tag} class="sb"${href}>
-  <span class="sb-meta"><time datetime="${m.date}">${dDay(m.date)} ${dShort(m.date)}</time>${showTeam ? `<b class="sb-team">${esc(m.teamObj.short)}</b>` : ''}<span>${esc(m.cup ? m.comp : m.roundName || m.comp)}${m.past && !m.score ? ` · ${noScore(m).toLowerCase()}` : ''}</span></span>
-  <span class="sb-row">${side(h, 'sb-t--h')}<span class="sb-mid">${mid}</span>${side(a, 'sb-t--a')}</span>
+  const where = m.home ? 'doma' : 'vonku';
+  const comp = esc(m.cup ? m.comp : m.roundName || m.comp);
+  return `<li class="mrow fx fx--${m.past ? 'res' : 'up'} fx--${m.home ? 'h' : 'a'}${m.past ? ` fx--${m.res || 'n'}` : ''}" data-team="${m.team}" data-where="${where}"><${tag} class="fx-a"${href}>
+  <time class="fx-d" datetime="${m.date}"><span class="fx-dd">${dDay(m.date)}</span> <span class="fx-dn">${dObj(m.date).getUTCDate()}.</span> <span class="fx-dm">${dObj(m.date).getUTCMonth() + 1}.</span></time>
+  <span class="fx-o"><span class="fx-on">${esc(m.opponent)}</span><span class="fx-k">${showTeam ? `${esc(m.teamObj.short)} · ` : ''}${comp} · ${where}</span></span>
+  <span class="fx-r">${m.past ? sc(m) : `<span class="fx-t">${esc(m.time || '–')}</span>`}</span>
 </${tag}></li>`;
 }
-const matchList = (list, R, opts) => `<ol class="mlist">${list.map((m) => matchRow(m, R, opts)).join('')}</ol>`;
+const fxList = (list, R, opts) => `<ol class="fxl${list.length && list.every((m) => m.past) ? ' fxl--res' : ' fxl--up'}">${list.map((m) => fxRow(m, R, opts)).join('')}</ol>`;
+const matchList = fxList;
+
+// zápasová karta
+function card(m, R, { big = false, label = '', self = false } = {}) {
+  const us = { name: ourName(m.teamObj), space: SPACE }, them = { name: m.opponent, space: m.oppSpace };
+  const [h, a] = m.home ? [us, them] : [them, us];
+  const lbl = label || (m.past ? 'Posledný zápas' : 'Najbližší zápas');
+  const side = (t, role) => `<div class="mc-side${t.space === SPACE ? ' is-us' : ''}"><span class="mc-crest">${logo(t.space, t.name, R, big ? 56 : 44, big)}</span><span class="mc-name">${esc(t.name)}</span><span class="sr"> (${role})</span></div>`;
+  const mid = m.score ? `<span class="sr">Výsledok </span>${esc(m.score)}` : m.past ? '–' : `<span class="sr">Výkop o </span>${esc(m.time || '–')}`;
+  const links = [];
+  if (m.score && m.detail && !self) links.push(`<a class="mc-a" href="${R}${m.url}">Priebeh a zostavy${I.arrow}</a>`);
+  if (!m.past && !self) links.push(`<a class="mc-a" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Do kalendára</a>`);
+  return `<article class="mc${big ? ' mc--big' : ''}">
+  <p class="mc-top"><span class="mc-label">${esc(lbl)}</span><span>${esc(m.teamObj.short)} · ${esc(m.comp)}${m.roundName ? `, ${esc(m.roundName)}` : ''}</span></p>
+  <div class="mc-row">${side(h, 'domáci')}<p class="mc-mid${m.score ? ` mc-mid--${m.res}` : ''}">${mid}</p>${side(a, 'hostia')}</div>
+  <p class="mc-when"><time datetime="${m.date}">${dLong(m.date)}</time>${m.time && !m.past ? ` · ${esc(m.time)}` : ''}${m.venue ? ` · ${glueAbbr(esc(venueName(m.venue)))}` : ''}${m.score ? ` · ${RES[m.res].toLowerCase()}` : ''}</p>
+  ${!m.past ? `<p class="mc-cd"><span class="cd" data-kickoff="${isoLocal(m.date, m.time)}" hidden></span></p>` : ''}
+  ${links.length ? `<p class="mc-links">${links.join('')}</p>` : ''}
+</article>`;
+}
 
 function tableHtml(tb, R, { compact = false, caption = '' } = {}) {
   let rows = tb.rows;
   if (compact) { const i = rows.findIndex((r) => r.our); const from = Math.max(0, Math.min(i - 2, rows.length - 5)); rows = rows.slice(from, from + 5); }
   return `<div class="tbl-wrap"><table class="tbl">${caption ? `<caption>${caption}</caption>` : ''}
   <thead><tr><th scope="col"><abbr title="Poradie">#</abbr></th><th scope="col" class="tl">Tím</th><th scope="col"><abbr title="Zápasy">Z</abbr></th><th scope="col" class="hm"><abbr title="Výhry">V</abbr></th><th scope="col" class="hm"><abbr title="Remízy">R</abbr></th><th scope="col" class="hm"><abbr title="Prehry">P</abbr></th><th scope="col">Skóre</th><th scope="col"><abbr title="Body">B</abbr></th></tr></thead>
-  <tbody>${rows.map((r) => `<tr${r.our ? ' class="our"' : ''}><td class="pos">${r.pos}</td><th scope="row" class="tl"><span class="tteam">${logo(r.space, r.name, R, 24)}<span>${esc(nazov(r.name))}</span></span></th><td>${r.played}</td><td class="hm">${r.won}</td><td class="hm">${r.draw}</td><td class="hm">${r.lost}</td><td class="nw">${r.gf}:${r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody>
+  <tbody>${rows.map((r) => `<tr${r.our ? ' class="our"' : ''}><td class="pos">${r.pos}</td><th scope="row" class="tl"><span class="tteam">${logo(r.space, r.name, R, 22)}<span>${esc(nazov(r.name))}</span></span></th><td>${r.played}</td><td class="hm">${r.won}</td><td class="hm">${r.draw}</td><td class="hm">${r.lost}</td><td class="nw">${r.gf}:${r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody>
 </table></div>`;
 }
 const formHtml = (slug, n = 5) => {
   const last = teamMatches(slug).filter((m) => m.res).slice(-n);
-  return last.length ? `<ol class="form" aria-label="Forma: ${last.length === 1 ? 'posledný zápas' : last.length <= 4 ? `posledné ${last.length} zápasy` : `posledných ${last.length} zápasov`}">${last.map((m) => `<li class="res-bg--${m.res}" title="${dShort(m.date)} ${esc(m.opponent)} ${m.score}"><span aria-hidden="true">${RES_S[m.res]}</span><span class="sr">${RES[m.res]} ${esc(m.opponent)} ${m.score}</span></li>`).join('')}</ol>` : '';
+  return last.length ? `<ol class="form" aria-label="Forma: ${last.length === 1 ? 'posledný zápas' : last.length <= 4 ? `posledné ${last.length} zápasy` : `posledných ${last.length} zápasov`}">${last.map((m) => `<li class="form--${m.res}" title="${dShort(m.date)} ${esc(m.opponent)} ${m.gf}:${m.ga}"><span aria-hidden="true">${RES_S[m.res]}</span><span class="sr">${RES[m.res]} ${esc(m.opponent)} ${m.gf}:${m.ga}</span></li>`).join('')}</ol>` : '';
 };
-
-// kalendár zápasov (.ics): odber cez webcal/Google doplní site.mjs, inak stiahnutie
 const calBox = (file, R, id) => `<details class="cal" data-cal id="${id}">
   <summary class="btn btn--line">${I.cal}<span>Zápasy do kalendára</span></summary>
   <div class="cal-pop">
-    <a class="cal-o" data-webcal href="${R}kalendar/${file}" hidden><b>Odoberať v telefóne</b><span>iPhone, Mac, Outlook – rozpis sa sám aktualizuje</span></a>
-    <a class="cal-o" data-gcal href="${R}kalendar/${file}" rel="noopener" hidden><b>Pridať do Google Kalendára</b><span>aj pre Android</span></a>
-    <a class="cal-o" data-ics href="${R}kalendar/${file}" download><b>Stiahnuť súbor .ics</b><span>jednorazovo, bez aktualizácií</span></a>
+    <a class="cal-o" data-webcal href="${R}kalendar/${file}" hidden><b>Odoberať v telefóne</b><span>iPhone, Mac, Outlook</span></a>
+    <a class="cal-o" data-gcal href="${R}kalendar/${file}" rel="noopener" hidden><b>Google Kalendár</b><span>aj pre Android</span></a>
+    <a class="cal-o" data-ics href="${R}kalendar/${file}" download><b>Stiahnuť .ics</b><span>jednorazovo</span></a>
   </div>
 </details>`;
-
-// výber zápasu: zápas v najbližších 7 dňoch, inak posledný odohraný (zimná prestávka), inak najbližší
 function cardPick(slug) {
   const list = teamMatches(slug);
   const next = list.find((m) => !m.past);
-  const last = [...list].reverse().find((m) => m.past && (m.score || !m.teamObj.adult));
+  const last = [...list].reverse().find((m) => m.past && (m.score || isPrep(m.teamObj)));
   const soon = next && (dObj(next.date) - dObj(TODAY)) / 864e5 <= 7;
   return soon ? next : last || next;
 }
-
-// tímy na úvode: riadok s kódom tímu, posledným výsledkom alebo najbližším zápasom
-function teamsBoard(R, list) {
-  return `<ul class="tb">${list.map((t) => {
-    const m = cardPick(t.slug);
-    if (!m) return '';
-    const href = m.detail || !m.past ? `${R}${m.url}` : `${R}${t.url}`;
-    const right = m.score
-      ? `<span class="tb-score res-bg--${m.res}"><span class="sr">${RES[m.res]} </span>${esc(m.score)}</span>`
-      : m.past ? '<span class="tb-score tb-score--none">bez výsl.</span>' : `<span class="tb-score tb-score--time">${esc(m.time || '')}</span>`;
-    return `<li><a class="tb-row" href="${href}">
-    <span class="tb-code">${esc(t.short.replace('-mužstvo', '').replace(' dievčatá', ' D'))}</span>
-    <span class="tb-main"><span class="tb-top">${esc(t.sub)}&nbsp;· ${dDay(m.date)} ${dShort(m.date)}&nbsp;· ${m.home ? 'doma' : 'vonku'}</span><span class="tb-opp">${esc(m.opponent)}</span></span>
-    ${right}
-  </a></li>`;
-  }).join('')}</ul>`;
-}
-
-// Európska liga 2011 – 2013
-function europe(R) {
-  const z = club.europa.zapasy;
-  return `<ol class="eu">${z.map((x) => `<li class="eu-r${x.postup ? ' eu-r--w' : ''}">
-    <span class="eu-s">${esc(x.sezona)}</span>
-    <span class="eu-k">${esc(x.kolo)}</span>
-    <span class="eu-o"><b>${esc(x.super)}</b><small>${esc(x.krajina)}</small></span>
-    <span class="eu-sc"><span class="sr">doma </span>${esc(x.doma)}<span class="eu-sep" aria-hidden="true">/</span><span class="sr">, vonku </span>${esc(x.vonku)}</span>
-    ${x.postup ? '<span class="eu-p">postup</span>' : ''}
-  </li>`).join('')}</ol>`;
-}
-
-// tímy podľa vekových skupín (aj dievčenské tímy: dorastenky, žiačky)
-const GROUPS = [['Muži', (t) => t.adult], ['Dorast', (t) => /dorast/i.test(t.sub)], ['Žiaci a žiačky', (t) => /žia(ci|čky)/i.test(t.sub)], ['Prípravka', (t) => /prípravka/i.test(t.sub)]];
-function teamGrid(R, only = () => true) {
-  return '<div class="tgroups">' + GROUPS.map(([g, f]) => [g, teams.filter((t) => f(t) && only(t))]).filter(([, l]) => l.length).map(([g, l]) => `<section class="tgroup" aria-label="${g}"><h3 class="tgroup-h">${g}</h3><ul class="tgrid">${l.map((t) => `<li class="tcard${t.adult ? ' tcard--a' : ''}${t.pos === 1 ? ' tcard--1' : ''}"><a href="${R}${t.url}">
-  <span class="tcard-n">${esc(t.short)}</span>
-  <span class="tcard-s">${esc(t.adult ? 'Muži' : t.sub)}</span>
-  <span class="tcard-l">${esc(t.leagueName)}</span>
-  ${t.pos ? `<span class="tcard-p"><b>${t.pos}.</b> ${zo(t.of)}</span>` : '<span class="tcard-p">bez tabuľky</span>'}
-  ${coachOf(t) ? `<span class="tcard-k">tréner ${esc(coachOf(t))}</span>` : ''}
-</a></li>`).join('')}</ul></section>`).join('') + '</div>';
-}
+const coachOf = (t) => t.squad.crew.filter((c) => c.role === 'coach').map((c) => c.name).join(' a ') || t.squad.crew.find((c) => c.role === 'manager')?.name || '';
+const coachRole = (t) => { const n = t.squad.crew.filter((c) => c.role === 'coach').length; return n > 1 ? 'tréneri' : n ? 'tréner' : 'vedúci'; };
+const teamRows = (R, only = () => true) => `<ul class="teams">${teams.filter(only).map((t) => `<li><a href="${R}${t.url}"><span class="teams-n">${esc(t.short)}</span><span class="teams-s">${esc(t.adult ? 'Muži' : t.sub)}</span><span class="teams-l">${esc(t.leagueName)}</span><span class="teams-p">${t.pos ? `${t.pos}. ${zo(t.of)}` : 'bez tabuľky'}</span></a></li>`).join('')}</ul>`;
+const seasonsTable = (list) => `<div class="tbl-wrap"><table class="tbl tbl--roc"><caption class="sr">Ročníky áčka</caption>
+  <thead><tr><th scope="col" class="tl">Ročník</th><th scope="col" class="tl">Súťaž</th><th scope="col">Miesto</th><th scope="col" class="hm">Skóre</th><th scope="col">Body</th></tr></thead>
+  <tbody>${list.map((x) => `<tr${x.titul || x.naj ? ' class="our"' : ''}><th scope="row" class="tl">${esc(x.rok)}</th><td class="tl">${esc(x.liga)}${x.pozn ? `<small>${esc(x.pozn)}</small>` : ''}</td><td class="nw">${x.poz ? `${x.poz}.<span> ${zo(x.z)}</span>` : '–'}</td><td class="hm nw">${esc(x.skore || '')}</td><td>${x.body ?? ''}</td></tr>`).join('')}</tbody>
+</table></div>`;
+const facts = (list) => `<dl class="kv">${list.map((f) => `<div><dt>${esc(f.k)}</dt><dd>${esc(f.t)}</dd></div>`).join('')}</dl>`;
 
 // ---- stránky -----------------------------------------------------------------------------------
 const pages = [];
 const add = (route, opts) => pages.push({ route, ...opts });
-const crewRole = { coach: 'Tréner', assist_coach: 'Asistent trénera', coach_goalkeepers: 'Tréner brankárov', manager: 'Vedúci mužstva', doctor: 'Lekár', physiotherapist: 'Fyzioterapeut', masseur: 'Masér', club_representative: 'Zástupca klubu', security_manager: 'Hlavný usporiadateľ', other: 'Člen realizačného tímu' };
+const crewRole = { coach: 'Tréner', assist_coach: 'Asistent trénera', coach_goalkeepers: 'Tréner brankárov', manager: 'Vedúci mužstva', doctor: 'Zdravotník', physiotherapist: 'Fyzioterapeut', masseur: 'Masér', club_representative: 'Zástupca klubu', security_manager: 'Hlavný usporiadateľ', other: 'Člen realizačného tímu' };
 const POS = [['goalkeeper', 'Brankári'], ['defender', 'Obrancovia'], ['midfielder', 'Stredopoliari'], ['forward', 'Útočníci'], ['', 'Hráči']];
-const coachOf = (t) => t.squad.crew.find((c) => c.role === 'coach')?.name || '';
+const teamLabel = (t) => (t.adult ? t.full : `${t.short} ${t.sub.toLowerCase()}`);
+const winterLine = () => {
+  const first = upcoming[0];
+  if (!first || (dObj(first.date) - dObj(TODAY)) / 864e5 <= 14) return '';
+  return nextA ? `Zimná prestávka. Áčko začína ${dWhen(nextA.date)} ${nextA.home ? 'doma proti' : 'na ihrisku'} ${esc(nextA.opponent)}.` : `Zimná prestávka. Prvý zápas je ${dWhen(first.date)}.`;
+};
 
-// úvod
-add('', {
-  title: `futbal v Senici od roku ${club.zalozenie}`, active: '', bodyClass: 'home',
-  body: (R) => {
-    const nextAll = upcoming.slice(0, 6);
-    const lastAll = results.filter((m) => m.score).slice(0, 6);
-    const lg = record(A.slug, (m) => !m.cup);
-    const top = scorers(A.slug);
-    const row = A.table?.rows.find((r) => r.our);
-    const winterNext = upcoming[0];
-    const aNext = upcoming.find((m) => m.team === A.slug);
-    const winter = winterNext && (dObj(winterNext.date) - dObj(TODAY)) / 864e5 > 14;
-    const winterText = !winterNext ? '' : aNext && aNext.date === winterNext.date
-      ? `Jar sa začína ${dWhen(winterNext.date)}, áčko v ten deň hrá ${aNext.home ? 'doma proti' : 'vonku na ihrisku'} ${esc(aNext.opponent)}.`
-      : `Prvé jarné zápasy sú ${dWhen(winterNext.date)} (${esc(winterNext.teamObj.full)})${aNext ? `, áčko začína ${dWhen(aNext.date)} ${aNext.home ? 'doma proti' : 'vonku na ihrisku'} ${esc(aNext.opponent)}` : ''}.`;
-    const aPick = cardPick(A.slug);
-    const youthTop = teams.filter((t) => !t.adult && t.table);
-    const leaders = youthTop.filter((t) => t.pos === 1);
-    const comeback = club.historia.filter((h) => ['2022', '2023/24', '2024/25', '2025/26', '2026/27'].includes(h.rok));
-    return `<section class="hero" aria-labelledby="hero-h"><div class="wrap hero-in">
-  <div class="stand">${seats('SENICA', { cls: 'seats seats--hero', pad: 1, label: 'Nápis SENICA zo sedadiel na tribúne' })}</div>
-  <div class="hero-copy">
-    <p class="eyebrow">Záhoráci · futbal od roku ${club.zalozenie}</p>
-    <h1 class="hero-h" id="hero-h">${esc(club.nazov)}</h1>
-    <p class="hero-p">Klub, ktorý hral najvyššiu súťaž a Európsku ligu, po krachu v roku 2022 začal znova vo VIII. lige. Dnes hrá áčko ${esc(acc(A.leagueName))}${A.pos ? ` a ${winter ? 'po jeseni ' : ''}je na ${A.pos}. mieste` : ''}, v akadémii hrá ${plural(teams.length - 1, 'mládežnícky tím', 'mládežnícke tímy', 'mládežníckych tímov')}.</p>
-    <p class="hero-cta"><a class="btn btn--red" href="${R}zapasy/">Program a výsledky</a><a class="btn btn--ghost" href="${R}mladez/">Akadémia</a></p>
-  </div>
-</div></section>
-${winterText && winter ? `<section class="pause"><div class="wrap"><p><b>Zimná prestávka.</b> ${winterText}</p></div></section>` : ''}
-<section class="sec" aria-labelledby="now-h"><div class="wrap now">
-  <div>${secHead('Zápas áčka', 'now-h', '', esc(A.leagueName))}${aPick ? card(aPick, R, { big: true }) : ''}</div>
-  <div><h2 class="h3 now-h2">Akadémia cez víkend</h2>${teamsBoard(R, youthTop.slice(0, 7))}${more(`${R}timy/`, `Všetkých ${teams.length} tímov`)}</div>
-</div></section>
-<section class="sec sec--mist" aria-labelledby="prog-h"><div class="wrap">
-  ${secHead('Program a výsledky', 'prog-h', more(`${R}zapasy/`, 'Všetky zápasy'))}
-  <div class="cols2">
-    <div><h3 class="h3">Najbližšie</h3>${matchList(nextAll, R)}</div>
-    <div><h3 class="h3">Posledné výsledky</h3>${matchList(lastAll, R)}</div>
-  </div>
-</div></section>
-${A.table ? `<section class="sec" aria-labelledby="liga-h"><div class="wrap">
-  ${secHead(`Áčko, ${esc(A.leagueName)}`, 'liga-h', more(`${R}tabulky/#${A.slug}`, 'Celá tabuľka'))}
-  <div class="liga">
-    <div class="liga-pos">${seats(`${A.pos}.`, { cls: 'seats seats--pos', label: `${A.pos}.` })}<p>miesto ${zo(A.of)} · ${plural(row.pts, 'bod', 'body', 'bodov')} · skóre ${lg.gf}:${lg.ga}</p></div>
-    <div>${tableHtml(A.table, R, { compact: true, caption: '<span class="sr">Výrez tabuľky okolo FK Senica</span>' })}</div>
-    <div class="liga-side">
-      <div class="liga-row"><h3 class="h4">Forma</h3>${formHtml(A.slug)}</div>
-      ${top.length ? `<div class="liga-row liga-row--list"><h3 class="h4">Strelci áčka</h3><ol class="scorers">${top.slice(0, 4).map(([n, g]) => `<li><span>${esc(n)}</span><b>${g}</b></li>`).join('')}</ol></div>` : ''}
-    </div>
-  </div>
-</div></section>` : ''}
-<section class="sec sec--navy" aria-labelledby="back-h"><div class="wrap back">
-  <div>
-    <p class="eyebrow">Odznova</p>
-    <h2 class="h2" id="back-h">Štyri sezóny po krachu</h2>
-    <p class="lead">Po sezóne 2021/22 prišla Senica o licenciu. Nový klub začal vo VIII. lige ObFZ Senica a dve sezóny po sebe vyhral svoju súťaž.</p>
-  </div>
-  <ol class="rows">${comeback.map((h) => `<li><span class="rows-y">${esc(h.rok)}</span><span>${esc(h.text)}</span></li>`).join('')}</ol>
-</div></section>
-<section class="sec" aria-labelledby="aka-h"><div class="wrap">
-  ${secHead('Akadémia', 'aka-h', more(`${R}mladez/`, 'Mládež a nábor'))}
-  <p class="lead">${plural(teams.length - 1, 'mládežnícky tím', 'mládežnícke tímy', 'mládežníckych tímov')} od prípravky U9 po dorast U19, aj dievčenské tímy U15 a U19. ${leaders.length ? `Svoje súťaže vedú ${leaders.map((t) => esc(t.full)).join(' a ')}.` : ''}</p>
-  ${teamGrid(R, (t) => !t.adult)}
-</div></section>
-<section class="sec sec--navy" aria-labelledby="eu-h"><div class="wrap cols2">
-  <div>
-    <p class="eyebrow">Európska liga</p>
-    <h2 class="h2" id="eu-h">Senica v Európe</h2>
-    <p class="lead">Senica hrala tri leta po sebe predkolá Európskej ligy. Prvým súperom bol v roku 2011 Red Bull Salzburg.</p>
-    <p class="src src--inv">Zdroj: Wikipédia. <a href="${R}klub/">História klubu</a></p>
-  </div>
-  ${europe(R)}
-</div></section>
-<section class="sec" aria-labelledby="st-h"><div class="wrap stadium">
-  <div class="stadium-seats">${seats(String(ST.kapacita), { cls: 'seats seats--cap', label: num(ST.kapacita) })}<p>miest na štadióne</p></div>
-  <div>
-    ${secHead(esc(ST.nazov), 'st-h', '', 'Štadión')}
-    <p>${esc(ST.pribeh)}</p>
-    <p class="btns"><a class="btn btn--navy" href="${mapsUrl}" rel="noopener">${I.route}Navigovať</a><a class="btn btn--line" href="${R}stadion/">O štadióne</a></p>
-  </div>
-</div></section>`;
-  },
-});
-
-// zápasy
 add('zapasy/', {
-  title: 'Zápasy a výsledky', active: 'zapasy/', desc: `Program a výsledky všetkých tímov ${club.nazov} v sezóne ${SEASON}.`,
+  title: 'Zápasy', active: 'zapasy/', desc: `Program a výsledky všetkých tímov ${club.nazov} v sezóne ${SEASON}.`,
   body: (R) => {
     const grp = (list) => {
       const months = new Map();
       for (const m of list) { const k = monthKey(m.date); if (!months.has(k)) months.set(k, []); months.get(k).push(m); }
       return [...months].map(([k, l]) => `<section class="month" data-month><h3 class="month-h">${monthName(k)}</h3>${matchList(l, R)}</section>`).join('');
     };
-    return `${pageHead({ title: 'Zápasy a výsledky', sub: `Sezóna ${SEASON}, všetky tímy. Výsledky, góly a karty preberáme zo Sportnetu.`, R, crumbs: [[null, 'Zápasy']] })}
+    return `${pageHead({ title: 'Zápasy', sub: `Ročník ${SEASON}, všetky tímy.`, R, crumbs: [[null, 'Zápasy']] })}
 <section class="sec sec--first"><div class="wrap">
   <div class="filters" data-filters>
     <div class="chips" role="group" aria-label="Tím"><button type="button" class="chip" data-f-team="" aria-pressed="true">Všetky</button>${teams.map((t) => `<button type="button" class="chip" data-f-team="${t.slug}" aria-pressed="false">${esc(t.short)}</button>`).join('')}</div>
@@ -500,67 +342,62 @@ add('zapasy/', {
   },
 });
 
-// detail zápasu
 function lineupHtml(l, title) {
   if (!l || (!l.start.length && !l.subs.length)) return '';
-  const li = (p) => `<li><span class="ln-nr">${esc(p.nr)}</span><span>${esc(p.name)}${p.c ? ' <abbr class="cap" title="kapitán">C</abbr>' : ''}</span></li>`;
+  const li = (p) => `<li><span class="ln-nr">${esc(p.nr)}</span><span>${esc(p.name)}${p.c ? ' <abbr class="cap" title="kapitán"><span aria-hidden="true">C</span><span class="sr">kapitán</span></abbr>' : ''}</span></li>`;
   return `<div class="lineup"><h3 class="h4">${esc(title)}</h3><ol class="ln">${l.start.map(li).join('')}</ol>${l.subs.length ? `<p class="ln-h">Náhradníci</p><ol class="ln ln--subs">${l.subs.map(li).join('')}</ol>` : ''}${l.coach ? `<p class="ln-coach">Tréner: ${esc(l.coach)}</p>` : ''}</div>`;
 }
 for (const m of matches) {
   if (m.past && !m.detail) continue;
   const name = m.home ? `${club.nazov} – ${m.opponent}` : `${m.opponent} – ${club.nazov}`;
   add(m.url, {
-    title: `${name}${m.score ? ` ${m.score}` : ''}`, active: 'zapasy/',
-    desc: `${m.teamObj.full}, ${m.comp}, ${dLong(m.date)}.`,
+    title: `${name}${m.score ? ` ${m.score}` : ''}`, active: 'zapasy/', desc: `${m.teamObj.full}, ${m.comp}, ${dLong(m.date)}.`,
     body: (R) => {
       const ev = [...(m.goals || []).map((g) => ({ ...g, t: 'goal' })), ...(m.cards || []).map((c) => ({ ...c, t: 'card' })), ...((m.lineups?.subs) || []).map((s) => ({ ...s, t: 'sub' }))]
         .sort((a, b) => (parseInt(a.min, 10) || 0) - (parseInt(b.min, 10) || 0));
       const evIcon = (e) => e.t === 'goal' ? `<span class="ev-i ev-goal" aria-hidden="true">${I.ball}</span>` : e.t === 'card' ? `<span class="ev-i ev-card ev-card--${e.kind}" aria-hidden="true"></span>` : '<span class="ev-i ev-sub" aria-hidden="true">⇄</span>';
-      const evText = (e) => e.t === 'goal' ? `Gól: ${esc(e.player)}${e.kind === 'penalty' ? ' (z penalty)' : e.kind === 'own' ? ' (vlastný)' : ''}` : e.t === 'card' ? `${e.kind === 'yellow' ? 'Žltá karta' : e.kind === 'red' ? 'Červená karta' : 'Druhá žltá a červená'}: ${esc(e.player)}` : `Striedanie: prichádza ${esc(e.in)}, odchádza ${esc(e.out)}`; // bez „za“ + meno, ktoré by sa muselo skloňovať
+      const evText = (e) => e.t === 'goal' ? (e.kind === 'own' ? `Vlastný gól: ${esc(e.player)}` : `Gól: ${esc(e.player)}${e.kind === 'penalty' ? ' (z penalty)' : ''}`) : e.t === 'card' ? `${e.kind === 'yellow' ? 'Žltá karta' : e.kind === 'red' ? 'Červená karta' : 'Druhá žltá a červená'}: ${esc(e.player) || 'hráč neuvedený'}` : `Striedanie: prichádza ${esc(e.in)}, odchádza ${esc(e.out)}`;
       const evSide = (e) => ((e.side === 'our') === m.home ? 'h' : 'a');
-      const evTeam = (e) => (e.side === 'our' ? club.nazov : m.opponent);
       const prevMeet = matches.filter((x) => x.oppSpace === m.oppSpace && x.id !== m.id && x.team === m.team && x.score);
       const snUrl = sn.matches.find((x) => x.id === m.id)?.url;
-      return `${pageHead({ title: name, sub: `${esc(m.teamObj.full)}, ${esc(m.comp)}${m.roundName ? `, ${esc(m.roundName)}` : ''}`, R, crumbs: [['zapasy/', 'Zápasy'], [null, dShort(m.date) + ' ' + m.opponent]] })}
+      return `${pageHead({ title: name, sub: `${esc(m.teamObj.full)} · ${esc(m.comp)}${m.roundName ? `, ${esc(m.roundName)}` : ''}`, R, crumbs: [['zapasy/', 'Zápasy'], [null, dShort(m.date)]] })}
 <section class="sec sec--first"><div class="wrap match">
   <div class="match-card">${card(m, R, { big: true, self: true, label: m.score ? 'Konečný výsledok' : 'Zápas' })}</div>
   <div class="match-info">
-    ${ev.length ? `<h2 class="h3">Priebeh zápasu</h2><ol class="evs">${ev.map((e) => `<li class="ev ev--${evSide(e)}"><span class="ev-min">${esc(e.min)}′</span>${evIcon(e)}<span>${evText(e)}<small>${esc(evTeam(e))}</small></span></li>`).join('')}</ol>` : m.score ? '<p>Zápis o stretnutí neobsahuje góly ani karty.</p>' : ''}
-    <dl class="facts">
+    ${ev.length ? `<h2 class="h3">Priebeh</h2><ol class="evs">${ev.map((e) => `<li class="ev ev--${evSide(e)}"><span class="ev-min">${esc(e.min)}′</span>${evIcon(e)}<span>${evText(e)}<small>${esc(e.side === 'our' ? club.nazov : m.opponent)}</small></span></li>`).join('')}</ol>` : ''}
+    <dl class="kv">
       <div><dt>Dátum</dt><dd>${dLong(m.date)}${m.time ? `, ${esc(m.time)}` : ''}</dd></div>
       ${m.venue ? `<div><dt>Ihrisko</dt><dd>${esc(venueName(m.venue))}</dd></div>` : ''}
       ${m.audience ? `<div><dt>Diváci</dt><dd>${num(m.audience)}</dd></div>` : ''}
       ${m.referee ? `<div><dt>Rozhodca</dt><dd>${esc(m.referee)}</dd></div>` : ''}
     </dl>
-    <p class="btns">${m.score && snUrl ? `<a class="btn btn--line" href="${snUrl}" rel="noopener">${I.ext}Zápis na Sportnete</a>` : ''}${!m.past ? `<a class="btn btn--dark" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Pridať do kalendára</a>${m.home ? `<a class="btn btn--line" href="${mapsUrl}" rel="noopener">${I.route}Navigovať na ihrisko</a>` : ''}` : ''}</p>
+    <p class="btns">${m.score && snUrl ? `<a class="btn btn--line" href="${snUrl}" rel="noopener">${I.ext}Zápis na Sportnete</a>` : ''}${!m.past ? `<a class="btn" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Do kalendára</a>${m.home ? `<a class="btn btn--line" href="${mapsUrl}" rel="noopener">${I.route}Navigovať</a>` : ''}` : ''}</p>
   </div>
   ${m.lineups ? `<div class="lineups"><h2 class="h3 lineups-h">Zostavy</h2>${lineupHtml(m.home ? m.lineups.our : m.lineups.opp, m.home ? club.nazov : m.opponent)}${lineupHtml(m.home ? m.lineups.opp : m.lineups.our, m.home ? m.opponent : club.nazov)}</div>` : ''}
-  ${prevMeet.length ? `<div class="meet"><h2 class="h3">Ďalšie zápasy s týmto súperom v sezóne</h2>${matchList(prevMeet, R, { showTeam: false })}</div>` : ''}
+  ${prevMeet.length ? `<div class="meet"><h2 class="h3">Ďalšie zápasy s týmto súperom</h2>${matchList(prevMeet, R, { showTeam: false })}</div>` : ''}
 </div></section>`;
     },
   });
 }
 
-// tabuľky
 add('tabulky/', {
-  title: 'Tabuľky', active: 'tabulky/', desc: `Tabuľky súťaží, v ktorých hrajú tímy ${club.nazov} v sezóne ${SEASON}.`,
-  body: (R) => `${pageHead({ title: 'Tabuľky', sub: `Sezóna ${SEASON}. Poradie podľa Sportnetu, náš tím je zvýraznený.`, R, crumbs: [[null, 'Tabuľky']] })}
+  title: 'Tabuľky', active: 'tabulky/', desc: `Tabuľky súťaží tímov ${club.nazov} v sezóne ${SEASON}.`,
+  body: (R) => `${pageHead({ title: 'Tabuľky', sub: `Ročník ${SEASON}, poradie podľa Sportnetu.`, R, crumbs: [[null, 'Tabuľky']] })}
 <section class="sec sec--first"><div class="wrap">
   <nav class="toc" aria-label="Tabuľky tímov">${teams.filter((t) => t.table).map((t) => `<a href="#${t.slug}">${esc(t.short)}</a>`).join('')}</nav>
   ${teams.filter((t) => t.table).map((t) => `<section class="tsec" id="${t.slug}" aria-labelledby="h-${t.slug}">
-    <div class="sec-head"><h2 class="h2" id="h-${t.slug}">${esc(t.full)}</h2>${more(`${R}${t.url}`, 'Stránka tímu')}</div>
-    <p class="tsec-l">${esc(t.leagueName)}</p>
+    ${secHead(esc(t.full), `h-${t.slug}`, more(`${R}${t.url}`, 'Tím'), esc(t.leagueName))}
     ${tableHtml(t.table, R)}
   </section>`).join('')}
-  ${teams.some((t) => !t.table) ? `<p class="note">${teams.filter((t) => !t.table).map((t) => esc(t.short)).join(', ')}: prípravky hrajú bez tabuľky.</p>` : ''}
+  ${teams.some((t) => !t.table) ? `<p class="note">${teams.filter((t) => !t.table).map((t) => esc(t.short)).join(', ')}: ${teams.filter((t) => !t.table).length > 1 ? 'prípravky hrajú' : 'prípravka hrá'} bez tabuľky.</p>` : ''}
 </div></section>`,
 });
 
-// tímy
 add('timy/', {
-  title: 'Tímy', active: 'timy/', desc: `Všetky tímy ${club.nazov}: muži, dorast, žiaci a prípravka v sezóne ${SEASON}.`,
-  body: (R) => `${pageHead({ title: 'Tímy', sub: `${plural(teams.length, 'tím', 'tímy', 'tímov')} v sezóne ${SEASON}, od prípravky U9 po A-mužstvo.`, R, crumbs: [[null, 'Tímy']] })}
-<section class="sec sec--first"><div class="wrap">${teamGrid(R)}
+  title: 'Tímy', active: 'timy/', desc: `Tímy ${club.nazov} v sezóne ${SEASON}.`,
+  body: (R) => `${pageHead({ title: 'Tímy', sub: `${plural(teams.length, 'tím', 'tímy', 'tímov')} v ročníku ${SEASON}.`, R, crumbs: [[null, 'Tímy']] })}
+<section class="sec sec--first"><div class="wrap">${teamRows(R)}
+  <div class="join"><h2 class="h3">Nábor do mládeže</h2><p>Chcete, aby vaše dieťa hralo futbal v klube? Napíšte nám a dohodneme prvý tréning.</p><p class="btns"><a class="btn" href="mailto:${club.kontakt.email}?subject=${encodeURIComponent('Nábor do mládeže')}">${I.mail}Napísať klubu</a></p></div>
 </div></section>`,
 });
 
@@ -572,16 +409,16 @@ for (const t of teams) {
       const nx = list.filter((m) => !m.past), rs = list.filter((m) => m.past).reverse();
       const pick = cardPick(t.slug);
       const rec = record(t.slug);
-      const sc = scorers(t.slug);
+      const scs = scorers(t.slug);
       const groups = POS.map(([k, h]) => [h, t.squad.athletes.filter((a) => (k ? a.pos === k : !POS.some(([x]) => x && x === a.pos)))]).filter(([, l]) => l.length);
       const nrCount = new Map(); for (const a of t.squad.athletes) nrCount.set(a.nr, (nrCount.get(a.nr) || 0) + 1);
       const nr = (a) => (a.nr !== '' && nrCount.get(a.nr) === 1 ? a.nr : '');
-      return `${pageHead({ title: t.full, sub: `${esc(t.leagueName)}${t.pos ? `, <b>${t.pos}. miesto</b> ${zo(t.of)}` : ''}`, R, crumbs: [['timy/', 'Tímy'], [null, t.short]] })}
+      return `${pageHead({ title: t.full, sub: `${esc(t.leagueName)}${t.pos ? ` · ${t.pos}. miesto ${zo(t.of)}` : ''}${coachOf(t) ? ` · ${coachRole(t)} ${esc(coachOf(t))}` : ''}`, R, crumbs: [['timy/', 'Tímy'], [null, t.short]] })}
 <section class="sec sec--first"><div class="wrap team-top">
   ${pick ? `<div>${card(pick, R, { big: true })}</div>` : ''}
   <div class="team-side">
-    ${rec.n ? `<p class="stat"><span class="stat-n">${rec.w}–${rec.d}–${rec.l}</span><span class="stat-l">výhry, remízy a prehry vo všetkých súťažiach, skóre ${rec.gf}:${rec.ga}</span></p><div class="liga-row"><h2 class="h4">Forma</h2>${formHtml(t.slug)}</div>` : '<p>Prípravky hrajú bez výsledkov a bez tabuľky. Rozpis zápasov je nižšie.</p>'}
-    ${sc.length && t.adult ? `<div class="liga-row liga-row--list"><h2 class="h4">Strelci v sezóne</h2><ol class="scorers">${sc.slice(0, 5).map(([n, g]) => `<li><span>${esc(n)}</span><b>${g}</b></li>`).join('')}</ol></div>` : ''}
+    ${rec.n ? `<p class="stat"><b>${rec.w}–${rec.d}–${rec.l}</b><span>výhry, remízy, prehry · skóre ${rec.gf}:${rec.ga}</span></p>${formHtml(t.slug)}` : '<p>Tím v tomto ročníku zatiaľ nemá výsledky.</p>'}
+    ${scs.length && t.adult ? `<h2 class="h4">Strelci</h2><ol class="scorers">${scs.slice(0, 5).map(([n, g]) => `<li><span>${esc(n)}</span><b>${g}</b></li>`).join('')}</ol>` : ''}
     ${calBox(`${t.slug}.ics`, R, `cal-${t.slug}`)}
   </div>
 </div></section>
@@ -589,119 +426,38 @@ for (const t of teams) {
   ${secHead('Zápasy', 'tz-h')}
   <div class="cols2">
     <div><h3 class="h3">Program</h3>${nx.length ? matchList(nx, R, { showTeam: false }) : '<p>Ďalšie zápasy zatiaľ nie sú vyžrebované.</p>'}</div>
-    <div><h3 class="h3">Výsledky</h3>${rs.length ? matchList(rs, R, { showTeam: false }) : '<p>Tím v tejto sezóne ešte nehral.</p>'}</div>
+    <div><h3 class="h3">Výsledky</h3>${rs.length ? matchList(rs, R, { showTeam: false }) : '<p>Tím v tomto ročníku ešte nehral.</p>'}</div>
   </div>
 </div></section>
-${t.table ? `<section class="sec sec--mist" aria-labelledby="tt-h"><div class="wrap">${secHead('Tabuľka', 'tt-h')}<p class="tsec-l">${esc(t.leagueName)}</p>${tableHtml(t.table, R)}</div></section>` : ''}
+${t.table ? `<section class="sec" aria-labelledby="tt-h"><div class="wrap">${secHead('Tabuľka', 'tt-h', '', esc(t.leagueName))}${tableHtml(t.table, R)}</div></section>` : ''}
 ${t.squad.athletes.length || t.squad.crew.length ? `<section class="sec" aria-labelledby="ts-h"><div class="wrap">
   ${secHead('Súpiska', 'ts-h')}
-  <p class="note">Hráči, ktorí v kalendárnom roku ${sn.updated.slice(0, 4)} nastúpili alebo boli v nominácii na zápas (podľa Sportnetu).${t.adult ? '' : ' Pri mládeži uvádzame len mená.'}</p>
-  ${groups.map(([h, l]) => `<h3 class="h4 sq-h">${h}</h3><ul class="squad">${l.sort((a, b) => a.name.split(' ').at(-1).localeCompare(b.name.split(' ').at(-1), 'sk')).map((a) => `<li class="pl"><span class="pl-nr" aria-hidden="true">${esc(nr(a)) || '<span class="pl-dot"></span>'}</span><span class="pl-name">${esc(a.name)}${a.captain && t.adult ? ' <abbr class="cap" title="kapitán">C</abbr>' : ''}</span>${nr(a) ? `<span class="sr">, číslo ${nr(a)}</span>` : ''}</li>`).join('')}</ul>`).join('')}
+  ${groups.map(([h, l]) => `<h3 class="h4 sq-h">${h}</h3><ul class="squad">${l.sort((a, b) => a.name.split(' ').at(-1).localeCompare(b.name.split(' ').at(-1), 'sk')).map((a) => `<li><span class="sq-nr" aria-hidden="true">${esc(nr(a))}</span><span>${esc(a.name)}${a.captain && t.adult ? ' <abbr class="cap" title="kapitán"><span aria-hidden="true">C</span><span class="sr">kapitán</span></abbr>' : ''}</span>${nr(a) ? `<span class="sr">, číslo ${nr(a)}</span>` : ''}</li>`).join('')}</ul>`).join('')}
   ${t.squad.crew.length ? `<h3 class="h4 sq-h">Realizačný tím</h3><ul class="crew">${t.squad.crew.map((c) => `<li><span class="crew-r">${esc(crewRole[c.role] || crewRole.other)}</span><span>${esc(c.name)}</span></li>`).join('')}</ul>` : ''}
+  <p class="note">Hráči, ktorí v roku ${sn.updated.slice(0, 4)} nastúpili alebo boli v nominácii (Sportnet).${t.adult ? '' : ' Pri mládeži len mená.'}</p>
 </div></section>` : ''}`;
     },
   });
 }
 
-// akadémia (mládež a nábor)
-add('mladez/', {
-  title: 'Akadémia', active: 'mladez/', desc: `Akadémia ${club.nazov}: ${teams.length - 1} mládežníckych tímov od prípravky U9 po dorast U19, dievčenské tímy U15 a U19, tréneri a súťaže.`,
-  body: (R) => {
-    const youth = teams.filter((t) => !t.adult);
-    const zs = youth.filter((t) => /ZsFZ/.test(t.leagueName));
-    return `${pageHead({ title: 'Akadémia', sub: `${plural(youth.length, 'mládežnícky tím', 'mládežnícke tímy', 'mládežníckych tímov')} v sezóne ${SEASON}, od prípravky U9 po dorast U19.`, R, crumbs: [[null, 'Akadémia']] })}
-<section class="sec sec--first"><div class="wrap youth-top">
-  <div>
-    <p class="lead">${zs.length ? `${plural(zs.length, 'tím hrá', 'tímy hrajú', 'tímov hrá')} súťaže Západoslovenského futbalového zväzu (II. a III. ligy dorastu a žiakov), ` : ''}ostatné súťaže Oblastného futbalového zväzu Senica. Senica má aj dievčenské tímy U15 a U19.</p>
-    <ul class="coaches">${youth.map((t) => `<li><a href="${R}${t.url}"><b>${esc(t.short)}</b><span>${esc(t.sub)} · ${esc(t.leagueName)}${t.pos ? ` · ${t.pos}. miesto` : ''}</span>${coachOf(t) ? `<small>tréner ${esc(coachOf(t))}</small>` : ''}</a></li>`).join('')}</ul>
-    <p class="src">Tréneri, súťaže a poradie podľa Sportnetu, sezóna ${SEASON}.</p>
-  </div>
-  <aside class="join">
-    <p class="eyebrow">Nábor</p>
-    <h2 class="h3">Prvý tréning</h2>
-    <p>Chce vaše dieťa hrať futbal v Senici? Napíšte klubu, kedy trénuje vekovo vhodná kategória, chlapci aj dievčatá.</p>
-    <p class="btns"><a class="btn btn--red" href="mailto:${club.kontakt.email}?subject=${encodeURIComponent('Nábor do akadémie')}">${I.mail}Napísať klubu</a></p>
-  </aside>
-</div></section>
-<section class="sec sec--mist" aria-labelledby="ymt-h"><div class="wrap">
-  ${secHead('Tímy akadémie', 'ymt-h', more(`${R}tabulky/`, 'Tabuľky'))}
-  ${teamGrid(R, (t) => !t.adult)}
-</div></section>
-<section class="sec" aria-labelledby="ynext-h"><div class="wrap">
-  ${secHead('Najbližšie zápasy akadémie', 'ynext-h', more(`${R}zapasy/`, 'Všetky zápasy'))}
-  ${matchList(upcoming.filter((m) => !m.teamObj.adult).slice(0, 10), R)}
-</div></section>`;
-  },
-});
-
-// klub a história
-add('klub/', {
-  title: 'Klub a história', active: 'klub/', desc: `${club.nazov}: futbal od roku ${club.zalozenie}, najvyššia súťaž a Európska liga, krach v roku 2022 a nový začiatok, rivalita s Myjavou.`,
-  body: (R) => `${pageHead({ title: 'Klub a história', sub: `${esc(club.pravnyNazov)}, prezývka ${esc(club.prezyvka)}. Futbal v Senici od roku ${club.zalozenie}.`, R, crumbs: [[null, 'Klub']] })}
-<section class="sec sec--first"><div class="wrap klub-grid">
-  <div>
-    <h2 class="h2">História</h2>
-    <ol class="annals">${club.historia.map((x) => `<li><p class="annals-y">${esc(x.rok)}</p><div><p>${esc(x.text)}</p><small>${esc(x.zdroj)}</small></div></li>`).join('')}<li class="annals-now"><p class="annals-y">${SEASON}</p><div><p>Áčko hrá ${esc(acc(A.leagueName))}${A.pos ? ` a ${upcoming.some((m) => m.team === A.slug && (dObj(m.date) - dObj(TODAY)) / 864e5 > 14) ? 'po jeseni ' : ''}je na ${A.pos}. mieste` : ''}. V klube hrá ${plural(teams.length, 'tím', 'tímy', 'tímov')}.</p><small>Sportnet</small></div></li></ol>
-  </div>
-  <aside class="klub-aside">
-    <img src="${R}img/erb-480.webp" alt="${esc(club.erbAlt)}" width="200" height="200" loading="lazy">
-    <h2 class="h4">Úspechy</h2>
-    <ul class="wins">${club.uspechy.map((u) => `<li>${I.trophy}<span><b>${esc(u.rok)}</b> ${esc(u.text)}</span></li>`).join('')}</ul>
-    <h2 class="h4">Rivalita</h2>
-    <p>${esc(club.rival)}</p>
-    <p>${esc(club.strelec)}</p>
-    <p class="src">Zdroj: Wikipédia (FK Senica).</p>
-  </aside>
-</div></section>
-<section class="sec sec--navy" aria-labelledby="eu2-h"><div class="wrap cols2">
-  <div><p class="eyebrow">Európska liga</p><h2 class="h2" id="eu2-h">Senica v Európe</h2><p class="lead">Tri leta po sebe, 2011 až 2013, hrala Senica predkolá Európskej ligy. Postúpila cez MTK Budapešť.</p></div>
-  ${europe(R)}
-</div></section>`,
-});
-
-// štadión
-add('stadion/', {
-  title: 'Štadión FK Senica', active: 'stadion/', desc: `${ST.nazov} (${ST.obchodny}) v Senici: ${num(ST.kapacita)} miest, otvorený v roku 1962 zápasom s vicemajstrami sveta, rekonštrukcia v rokoch 2009 a 2010.`,
-  body: (R) => {
-    const home = upcoming.filter((m) => m.home).slice(0, 6);
-    return `${pageHead({ title: ST.nazov, sub: `${esc(ST.obchodny)}, ${club.adresa.map(esc).join(', ')}. Otvorený ${esc(ST.otvoreny)}.`, R, crumbs: [[null, 'Štadión']] })}
-<section class="sec sec--first"><div class="wrap stad">
-  <div>
-    <div class="stadium-seats stadium-seats--page">${seats(String(ST.kapacita), { cls: 'seats seats--cap', label: num(ST.kapacita) })}<p>miest na štadióne</p></div>
-    <p class="lead">${esc(ST.pribeh)}</p>
-    <p>${esc(ST.rekonstrukcia)}</p>
-    <p class="btns"><a class="btn btn--navy" href="${mapsUrl}" rel="noopener">${I.route}Navigovať (Google Mapy)</a><a class="btn btn--line" href="${mapyUrl}" rel="noopener">${I.pin}Mapy.com</a></p>
-    <p class="src">Zdroj: Wikipédia (Štadión FK Senica), poloha zo Sportnetu.</p>
-  </div>
-  <div>${home.length ? `<h2 class="h3">Najbližšie zápasy doma</h2>${matchList(home, R)}` : ''}</div>
-</div></section>`;
-  },
-});
-
-// kontakt
 add('kontakt/', {
-  title: 'Kontakt', active: 'kontakt/', desc: `Kontakt na ${club.nazov}: e-mail, sídlo a štadión.`,
-  body: (R) => `${pageHead({ title: 'Kontakt', sub: 'Zápasy, nábor do akadémie, partnerstvo a spolupráca.', R, crumbs: [[null, 'Kontakt']] })}
+  title: 'Kontakt', active: 'kontakt/', desc: `Kontakt na ${club.nazov}: e-mail, sídlo a ihrisko.`,
+  body: (R) => `${pageHead({ title: 'Kontakt', R, crumbs: [[null, 'Kontakt']] })}
 <section class="sec sec--first"><div class="wrap contact">
-  <div class="ccard">
-    <p class="eyebrow">Kontakt klubu</p>
-    <p class="ccard-n">${esc(club.nazov)}</p>
-    <p class="btns"><a class="btn btn--red" href="mailto:${club.kontakt.email}">${I.mail}<span>${esc(club.kontakt.email).replace('@', '<wbr>@')}</span></a></p>
-    <p class="note">E-mail klubu podľa Sportnetu. Telefónne čísla klub verejne neuvádza.</p>
-  </div>
-  <dl class="facts">
-    <div><dt>Názov</dt><dd>${esc(club.pravnyNazov)}</dd></div>
-    <div><dt>Adresa</dt><dd>${club.adresa.map(esc).join(', ')}</dd></div>
-    <div><dt>Štadión</dt><dd>${esc(ST.nazov)} (${esc(ST.obchodny)})</dd></div>
-    <div><dt>Farby</dt><dd>${esc(club.farby)}</dd></div>
-  </dl>
   <div>
-    <h2 class="h3">Klub na webe</h2>
-    <ul class="docs">
-      <li><a href="${club.sportnetUrl}" rel="noopener">${I.ext}<span>Profil klubu na Sportnete</span><small>zápisy o stretnutí, súpisky, prestupy</small></a></li>
-    </ul>
-    <p class="src">Bývalé domény klubu dnes patria iným webom, Facebook ani Instagram klubu sme nenašli. Tréneri tímov sú na stránkach <a href="${R}timy/">tímov</a>.</p>
+    <p class="contact-mail"><a href="mailto:${club.kontakt.email}">${esc(club.kontakt.email).replace('@', '<wbr>@')}</a></p>
+    <dl class="kv">
+      <div><dt>Klub</dt><dd>${esc(club.pravnyNazov || club.nazov)}</dd></div>
+      <div><dt>Adresa</dt><dd>${club.adresa.map(esc).join(', ')}</dd></div>
+      <div><dt>Ihrisko</dt><dd>${esc(ST.nazov)}</dd></div>
+    </dl>
+    <p class="btns"><a class="btn" href="${mapsUrl}" rel="noopener">${I.route}Google Mapy</a><a class="btn btn--line" href="${mapyUrl}" rel="noopener">${I.pin}Mapy.com</a></p>
   </div>
+  <ul class="links">
+    <li><a href="${club.sportnetUrl}" rel="noopener">Klub na Sportnete</a></li>
+    ${club.kontakt.facebook ? `<li><a href="${club.kontakt.facebook}" rel="noopener">Facebook</a></li>` : ''}
+    ${(SKIN.links || []).map(([u, t]) => `<li><a href="${u}" rel="noopener">${esc(t)}</a></li>`).join('')}
+  </ul>
 </div></section>`,
 });
 
@@ -709,18 +465,82 @@ add('ochrana-sukromia/', {
   title: 'Ochrana súkromia', desc: `Ako web ${club.nazov} pracuje s údajmi.`,
   body: (R) => `${pageHead({ title: 'Ochrana súkromia', R, crumbs: [[null, 'Ochrana súkromia']] })}
 <section class="sec sec--first"><div class="wrap prose">
-  <p>Web nepoužíva cookies, analytiku ani reklamné nástroje a nenačítava nič z iných serverov. Všetky súbory vrátane písma a erbov sú uložené priamo na webe. Odkazy na Sportnet a mapy sú obyčajné odkazy.</p>
-  <p>Mená hráčov, trénerov a rozhodcov, výsledky, strelcov, karty a počty divákov preberáme z verejného systému Sportnet (Futbalnet), kam ich zapisujú kluby a zväzy pri zápasoch. Vek hráčov nezverejňujeme, pri mládeži uvádzame len mená a zostavy zápasov len pri dospelých.</p>
-  <p>Ak chcete niečo opraviť alebo odstrániť, napíšte na <a href="mailto:${club.kontakt.email}">${esc(club.kontakt.email)}</a>.</p>
+  <p>Web nepoužíva cookies, analytiku ani reklamné nástroje a nenačítava nič z iných serverov.</p>
+  <p>Mená hráčov, trénerov a rozhodcov, výsledky, strelcov, karty a počty divákov preberáme z verejného systému Sportnet (Futbalnet). Vek hráčov nezverejňujeme, pri mládeži uvádzame len mená a zostavy len pri dospelých.</p>
+  <p>Opravu alebo odstránenie údajov si môžete vyžiadať na <a href="mailto:${club.kontakt.email}">${esc(club.kontakt.email)}</a>.</p>
 </div></section>`,
 });
 
 add('404/', {
   title: 'Stránka sa nenašla',
-  body: (R) => `${pageHead({ title: 'Stránka sa nenašla', sub: 'Toto miesto na tribúne je prázdne. Adresa je chybná alebo sa stránka presunula.', R })}
-<section class="sec sec--first"><div class="wrap"><p class="btns"><a class="btn btn--red" href="${R}">Na úvod</a><a class="btn btn--line" href="${R}zapasy/">Zápasy a výsledky</a></p></div></section>`,
+  body: (R) => `${pageHead({ title: 'Stránka sa nenašla', sub: 'Adresa je chybná alebo sa stránka presunula.', R })}
+<section class="sec sec--first"><div class="wrap"><p class="btns"><a class="btn" href="${R}">Na úvod</a><a class="btn btn--line" href="${R}zapasy/">Zápasy</a></p></div></section>`,
 });
 
+const SKIN = {
+  nav: 'bar', theme: '#161d4a', brand: 'FK Senica', brandSub: 'Záhoráci od roku 1921',
+  fonts: ['abril-fatface-400.woff', 'crimson-pro-400.woff', 'crimson-pro-600.woff'],
+  sources: 'História a Európa podľa Wikipédie.',
+  adminHero: 'Futbal v Senici od roku 1921',
+  adminFacts: club.historia.map((h) => ({ k: h.rok, t: h.text })),
+  links: [],
+};
+const NAV = [['zapasy/', 'Zápasy'], ['tabulky/', 'Tabuľky'], ['timy/', 'Tímy'], ['klub/', 'Klub'], ['kontakt/', 'Kontakt']];
+const DESC = `${club.nazov} – futbal v Senici od roku ${club.zalozenie}. Zápasy, výsledky, tabuľky a súpisky áčka (${A.leagueName}) a mládeže, dva druhé miesta v najvyššej súťaži a štarty v Európskej lige.`;
+const orn = '<p class="orn" aria-hidden="true">✦</p>';
+
+add('', {
+  title: 'Záhoráci od roku 1921', active: '', bodyClass: 'home',
+  body: (R) => {
+    const m = nextA || lastA;
+    const wl = winterLine();
+    const vs = m ? (m.home ? `FK Senica <i>–</i> ${esc(m.opponent)}` : `${esc(m.opponent)} <i>–</i> FK Senica`) : esc(club.nazov);
+    return `<section class="cover"><div class="wrap cover-in">
+  <p class="cover-k">Zápasový bulletin · ${esc(A.leagueName)}${m?.roundName ? ` · ${esc(m.roundName)}` : ''}</p>
+  <img class="cover-crest" src="${R}img/erb-240.webp" alt="${esc(club.erbAlt)}" width="${Math.round(120 * CREST_R)}" height="120">
+  <h1 class="cover-h">${vs}${m?.score ? ` <span class="cover-sc">${esc(m.score)}</span>` : ''}</h1>
+  ${m ? `<p class="cover-d">${m.past ? 'Posledný zápas · ' : ''}<time datetime="${m.date}">${dLong(m.date)}</time>${m.time && !m.past ? ` · ${esc(m.time)}` : ''} · ${m.home ? esc(ST.nazov) : esc(venueName(m.venue || 'vonku'))}</p>` : ''}
+  ${m && !m.past ? `<p class="cover-cd"><span class="cd" data-kickoff="${isoLocal(m.date, m.time)}" hidden></span></p>` : ''}
+  ${wl ? `<p class="cover-p">${wl}</p>` : ''}
+  <p class="btns">${m && !m.past ? `<a class="btn" href="${R}kalendar/zapas-${m.id}.ics" download>${I.cal}Do kalendára</a>` : ''}<a class="btn btn--line" href="${R}zapasy/">Program a výsledky</a></p>
+</div></section>
+<section class="spread"><div class="wrap spread-in">
+  <div class="page-l">
+    <h2 class="h3">Posledné výsledky</h2>${fxList(results.filter((x) => x.score).slice(0, 5), R)}
+    <h2 class="h3 h3--gap">Program</h2>${upcoming.length ? fxList(upcoming.slice(0, 4), R) : '<p>Ďalšie zápasy zatiaľ nie sú vyžrebované.</p>'}
+    ${more(`${R}zapasy/`, 'Všetky zápasy')}
+  </div>
+  <div class="page-r">
+    <h2 class="h3">${esc(A.leagueName)}</h2>${A.table ? tableHtml(A.table, R) : ''}
+    ${more(`${R}tabulky/`, 'Tabuľky všetkých tímov')}
+  </div>
+</div></section>
+<section class="euro" aria-labelledby="eu-h"><div class="wrap">
+  ${orn}<h2 class="h2" id="eu-h">Senica v Európe</h2>
+  <ol class="euro-l">${club.europa.zapasy.map((z) => `<li><span class="euro-y">${esc(z.sezona)}</span><b>${esc(z.super)}</b><span class="euro-s">${esc(z.doma).replace(/ /g, '')} · ${esc(z.vonku).replace(/ /g, '')}</span><small>${esc(z.kolo)}${z.postup ? ' · postup' : ''}</small></li>`).join('')}</ol>
+  ${more(`${R}klub/`, 'História klubu')}
+</div></section>`;
+  },
+});
+
+add('klub/', {
+  title: 'Klub', active: 'klub/', desc: `${club.nazov}: od roku ${club.zalozenie}, najvyššia súťaž 2009 – 2022, Európska liga, nový začiatok v roku 2022 a štadión OMS Arena.`,
+  body: (R) => `${pageHead({ title: 'Záhoráci od roku 1921', sub: `${esc(club.pravnyNazov)}. Farby ${esc(club.farby)}.`, R, crumbs: [[null, 'Klub']] })}
+<section class="sec sec--first"><div class="wrap book">
+  <h2 class="h2">História</h2>
+  <ol class="hist">${club.historia.map((h) => `<li><b>${esc(h.rok)}</b><p>${esc(h.text)}</p></li>`).join('')}</ol>
+  ${orn}
+  <h2 class="h2">Úspechy</h2>
+  <ul class="wins">${club.uspechy.map((u) => `<li><b>${esc(u.rok)}</b> ${esc(u.text)}</li>`).join('')}</ul>
+  <p class="aside">${esc(club.rival)} ${esc(club.strelec)}</p>
+  ${orn}
+  <h2 class="h2">${esc(ST.nazov)}</h2>
+  <p class="aside">${esc(ST.obchodny)} · ${num(ST.kapacita)} miest · otvorený ${esc(ST.otvoreny)}</p>
+  <p>${esc(ST.pribeh)}</p>
+  <p>${esc(ST.rekonstrukcia)}</p>
+  <p class="note">Zdroje: Wikipédia (FK Senica, Štadión FK Senica, európske poháre), Sportnet.</p>
+</div></section>`,
+});
 
 // ---- kalendár (.ics, RFC 5545) ----------------------------------------------------------------
 const icsEsc = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
@@ -770,7 +590,7 @@ function writeAdminDemo() {
     news: [],
     info: {
       nazov: club.nazov, pravnyNazov: club.pravnyNazov, adresa: club.adresa, osoba: '', telefon: '', email: club.kontakt.email,
-      facebook: '', ico: '', ucet: '', stadion: { nazov: ST.nazov, kapacita: String(ST.kapacita), rozmery: '', vip: '' },
+      facebook: club.kontakt.facebook || '', ico: '', ucet: '', stadion: { nazov: ST.nazov, kapacita: '', rozmery: '', vip: '' },
     },
     allTeams: teams.map((t) => ({
       slug: t.slug, short: t.short, sub: t.adult ? 'Muži' : t.sub, league: t.leagueName, url: t.url, photo: null,
@@ -778,13 +598,13 @@ function writeAdminDemo() {
     })),
     coaches: [],
     pages: {
-      historia: { title: 'História', url: 'klub/', html: `<ul>${club.historia.map((h) => `<li><b>${esc(h.rok)}</b> – ${esc(h.text)}</li>`).join('')}</ul>` },
-      europa: { title: 'Senica v Európe', url: 'klub/', html: `<ul>${club.europa.zapasy.map((x) => `<li>${esc(x.sezona)} ${esc(x.kolo)}: ${esc(x.super)} ${esc(x.doma)} a ${esc(x.vonku)}</li>`).join('')}</ul>` },
+      historia: { title: 'Klub', url: 'klub/', html: `<ul>${(SKIN.adminFacts || []).map((h) => `<li><b>${esc(h.k)}</b> – ${esc(h.t)}</li>`).join('')}</ul>` },
+      rocniky: { title: 'Ročníky áčka', url: 'klub/', html: `<ul>${(club.rocniky?.zoznam || []).map((x) => `<li>${esc(x.rok)} ${esc(x.liga)}: ${x.poz ? `${x.poz}. miesto` : 'bez umiestnenia'}</li>`).join('')}</ul>` },
       'ochrana-sukromia': { title: 'Ochrana súkromia', url: 'ochrana-sukromia/', html: '<p>Web nepoužíva cookies, analytiku ani reklamné nástroje.</p>' },
     },
     home: {
-      heroTitle: club.nazov, heroText: `Futbal v Senici od roku ${club.zalozenie}. Áčko hrá ${acc(A.leagueName)}.`, hero: null,
-      stadion: { title: ST.nazov, text: ST.pribeh },
+      heroTitle: club.nazov, heroText: `${SKIN.adminHero || club.nazov}. Áčko hrá ${acc(A.leagueName)}.`, hero: null,
+      stadion: { title: ST.nazov, text: (ST.fakty || []).map((u) => u.text || u.t).join(' ') },
     },
     galleries: [], videos: [], fanshop: { pozn: '', email: club.kontakt.email, produkty: [] }, partners: [],
   };
@@ -811,11 +631,18 @@ fs.writeFileSync(path.join(OUT, 'css', 'site.css'), fontsCss + fs.readFileSync(p
 const NB = ' ';
 const typo = (html) => html.split(/(<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>)/).map((part, i) => (i % 2 ? part : part.replace(/>([^<]+)</g, (m, t) => '>' + t
   .replace(/(?<=^|[\s(„])([AaIiKkOoSsUuVvZz])[ \t]+(?=\S)/g, `$1${NB}`)
+  .replace(/(?<=^|[\s(])(zo|vo|so|ku) (?=\S)/g, `$1${NB}`) // „zo 16“, „vo IV. lige“
+  .replace(/ · /g, `${NB}· `) // oddeľovač „·“ nezačne riadok
   .replace(/(\d) : (\d)/g, `$1${NB}:${NB}$2`)
   .replace(/ - /g, ' – ') // spojovník medzi medzerami (názvy klubov a ihrísk zo Sportnetu) -> pomlčka
   .replace(/\b(U\d{1,2}) ([A-D])\b/g, `$1${NB}$2`) // „U15 A“ sa nerozdelí
+  .replace(/([a-záäčďéíĺľňóôŕšťúýž]) (U\d{1,2})\b/g, `$1${NB}$2`) // „dorast U19“, „prípravky U11“ sa nerozdelí
+  .replace(/(\d) (?=(?:rok|roky|rokov|rokoch|divák|diváci|divákov|bod|body|bodov|tím|tímy|tímov|mužstiev|vzorkami|m²|výhra|výhry|výhier|výhrami|prehra|prehry|prehier|víťazstiev|zápasov|gólov)(?![a-záäčďéíĺľňóôŕšťúýž]))/g, `$1${NB}`) // „400 divákov“, „23 rokov“
   .replace(/(?<=^|[\s(])(po|ut|st|št|pi|so|ne) (?=\d{1,2}\.)/g, `$1${NB}`) // „ne 15. 11.“
   .replace(/(\d\.) (?=(?:kol[oae]|miest[oea])\b)/g, `$1${NB}`)
+  .replace(/(?<![\d.])(\d{1,2}\.) (?=[a-záäčďéíĺľňóôŕšťúýž])/g, `$1${NB}`) // „14. storočia“, „3. mieste“ (radová číslovka s podstatným menom)
+  .replace(/(?<=^|[\s(])sv\. (?=\S)/g, `sv.${NB}`) // „sv. Juraja“
+  .replace(/\bpred n\. l\./g, `pred${NB}n.${NB}l.`)
   .replace(/\b(\d{1,2}\.) (?=(?:\d{1,2}\.|januára|februára|marca|apríla|mája|júna|júla|augusta|septembra|októbra|novembra|decembra)(?!\d))/g, `$1${NB}`) // „7. marca“, „15. 11.“
   .replace(/\b([IVX]{1,4}\.) (?=lig)/g, `$1${NB}`) // „V. liga“
   .replace(/\b(\d{3}) (\d{2})\b/g, `$1${NB}$2`) // PSČ 913 11
